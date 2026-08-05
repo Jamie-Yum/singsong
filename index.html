@@ -1095,28 +1095,67 @@ function closePreview() {
 // ─── TUNER ───────────────────────────────────────────────────────────────────
 let tAudio = null, tAnalyser = null, tInterval = null, tActive = false, tStream = null
 let refOsc = null, activeRefBtn = null
+const PITCH_BUF = []   // median filter history
 
 const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
-// YIN-simplified: 빠르고 정확한 피치 감지
+// McLeod Pitch Method — NSDF + parabolic interpolation
 function detectPitch(buf, sr) {
+  const N = buf.length
+
+  // Silence gate: raised for computer mic background noise
   let rms = 0
-  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i]
-  if (Math.sqrt(rms / buf.length) < 0.008) return -1  // 무음
+  for (let i = 0; i < N; i++) rms += buf[i] * buf[i]
+  if (Math.sqrt(rms / N) < 0.02) return -1
 
-  const SIZE = 1024  // 절반만 사용해 속도 향상
-  let bestOff = -1, bestCorr = 0, lastCorr = 1, found = false
+  // Guitar range in lag samples: E4(330Hz) → below E2(70Hz)
+  const tauMin = Math.ceil(sr / 350)
+  const tauMax = Math.floor(sr / 70)
 
-  for (let off = 1; off < SIZE; off++) {
-    let corr = 0
-    for (let i = 0; i < SIZE; i++) corr += buf[i] * buf[i + off]
-    corr /= SIZE
-    if (!found && corr > 0.85 && corr > lastCorr) { bestOff = off; found = true }
-    if (found && corr > bestCorr) { bestCorr = corr; bestOff = off }
-    if (found && corr < lastCorr * 0.5) break  // 피크 지나면 조기 종료
-    lastCorr = corr
+  // Prefix sums of squares → O(1) denominator per lag
+  const sq = new Float32Array(N + 1)
+  for (let i = 0; i < N; i++) sq[i + 1] = sq[i] + buf[i] * buf[i]
+
+  // NSDF(τ) = 2·Σx(j)x(j+τ) / (Σx(j)² + Σx(j+τ)²)
+  const nsdf = new Float32Array(tauMax + 1)
+  let maxNsdf = 0
+  for (let tau = tauMin; tau <= tauMax; tau++) {
+    const n = N - tau
+    const denom = sq[n] + (sq[N] - sq[tau])
+    if (denom < 1e-8) continue
+    let acf = 0
+    for (let j = 0; j < n; j++) acf += buf[j] * buf[j + tau]
+    nsdf[tau] = (2 * acf) / denom
+    if (nsdf[tau] > maxNsdf) maxNsdf = nsdf[tau]
   }
-  return bestOff > 0 && bestCorr > 0.7 ? sr / bestOff : -1
+
+  if (maxNsdf < 0.6) return -1   // insufficient harmonic clarity
+
+  // First local maximum at or above 93% of global peak (MPM k=0.93)
+  const threshold = 0.93 * maxNsdf
+  for (let tau = tauMin + 1; tau < tauMax; tau++) {
+    if (nsdf[tau] >= nsdf[tau - 1] && nsdf[tau] > nsdf[tau + 1] && nsdf[tau] >= threshold) {
+      // Parabolic interpolation for sub-sample frequency accuracy
+      const y0 = nsdf[tau - 1], y1 = nsdf[tau], y2 = nsdf[tau + 1]
+      const d = 2 * (2 * y1 - y0 - y2)
+      const refined = d !== 0 ? tau + (y2 - y0) / d : tau
+      return sr / refined
+    }
+  }
+  return -1
+}
+
+// 5-element median filter — kills outlier jumps; drains on silence
+function stablePitch(freq) {
+  if (freq > 0) {
+    PITCH_BUF.push(freq)
+    if (PITCH_BUF.length > 5) PITCH_BUF.shift()
+  } else {
+    if (PITCH_BUF.length > 0) PITCH_BUF.shift()
+  }
+  if (!PITCH_BUF.length) return -1
+  const s = [...PITCH_BUF].sort((a, b) => a - b)
+  return s[Math.floor(s.length / 2)]
 }
 
 function freqToNote(freq) {
@@ -1133,11 +1172,14 @@ async function toggleTuner() {
   btn.textContent = '⏳ 마이크 연결 중…'
   btn.disabled = true
   try {
-    tStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, video: false })
+    tStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      video: false
+    })
     tAudio = new AudioContext()
     if (tAudio.state === 'suspended') await tAudio.resume()
     tAnalyser = tAudio.createAnalyser()
-    tAnalyser.fftSize = 2048
+    tAnalyser.fftSize = 4096           // 2× buffer → better low-freq accuracy
     tAnalyser.smoothingTimeConstant = 0
     tAudio.createMediaStreamSource(tStream).connect(tAnalyser)
     tActive = true
@@ -1145,7 +1187,8 @@ async function toggleTuner() {
     btn.classList.add('on')
     btn.disabled = false
     status.textContent = '기타 줄을 튕겨보세요'
-    tInterval = setInterval(tunerLoop, 80)  // 초당 12회 — 모바일에 적합
+    PITCH_BUF.length = 0
+    tInterval = setInterval(tunerLoop, 80)
   } catch(e) {
     btn.textContent = '🎤 튜너 시작'
     btn.disabled = false
@@ -1157,20 +1200,18 @@ function tunerLoop() {
   if (!tActive) return
   const buf = new Float32Array(tAnalyser.fftSize)
   tAnalyser.getFloatTimeDomainData(buf)
-  const freq = detectPitch(buf, tAudio.sampleRate)
+  const freq = stablePitch(detectPitch(buf, tAudio.sampleRate))
   const noteEl = document.getElementById('tuner-note')
   const needle = document.getElementById('tuner-needle')
-  if (freq > 50 && freq < 1200) {
+  if (freq > 0) {
     const n = freqToNote(freq)
     noteEl.textContent = n.name + n.octave
     document.getElementById('tuner-freq').textContent = freq.toFixed(1) + ' Hz'
     document.getElementById('tuner-cents').textContent = (n.cents > 0 ? '+' : '') + n.cents + ' cents'
-    const pct = 50 + (n.cents / 50) * 44
-    needle.style.left = Math.max(5, Math.min(95, pct)) + '%'
+    needle.style.left = Math.max(5, Math.min(95, 50 + (n.cents / 50) * 44)) + '%'
     const abs = Math.abs(n.cents)
-    const color = abs < 5 ? 'var(--success)' : abs < 15 ? 'var(--accent)' : 'var(--danger)'
-    needle.style.background = color
-    noteEl.style.color = color
+    const col = abs < 5 ? 'var(--success)' : abs < 15 ? 'var(--accent)' : 'var(--danger)'
+    needle.style.background = col; noteEl.style.color = col
     document.getElementById('tuner-verdict').textContent = abs < 5 ? '✓ 정확해요' : n.cents < 0 ? '♭ 낮아요' : '♯ 높아요'
     document.getElementById('tuner-status').textContent = ''
   } else {
@@ -1185,11 +1226,13 @@ function stopTuner() {
   if (tInterval) { clearInterval(tInterval); tInterval = null }
   if (tStream) { tStream.getTracks().forEach(t => t.stop()); tStream = null }
   if (tAudio) { tAudio.close(); tAudio = null }
-  document.getElementById('tuner-toggle-btn').textContent = '🎤 튜너 시작'
-  document.getElementById('tuner-toggle-btn').classList.remove('on')
+  PITCH_BUF.length = 0
+  const btn = document.getElementById('tuner-toggle-btn')
+  btn.textContent = '🎤 튜너 시작'; btn.classList.remove('on'); btn.disabled = false
   const noteEl = document.getElementById('tuner-note')
   noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
   document.getElementById('tuner-needle').style.left = '50%'
+  document.getElementById('tuner-needle').style.background = 'var(--accent)'
   document.getElementById('tuner-verdict').textContent = '—'
   document.getElementById('tuner-status').textContent = ''
   document.getElementById('tuner-cents').textContent = '0 cents'
