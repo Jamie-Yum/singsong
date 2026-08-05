@@ -348,6 +348,39 @@ a{color:var(--accent)}
   background:rgba(232,160,32,.13);
   color:var(--accent);
 }
+.a4-row{display:flex;align-items:center;gap:8px;padding:10px 20px 0;width:100%;max-width:320px}
+.a4-label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.5px;white-space:nowrap}
+.a4-adj{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;
+}
+.a4-adj:active{background:var(--accent);color:#000}
+.a4-display{
+  flex:1;text-align:center;font-size:13px;font-weight:600;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:5px 0;color:var(--muted);
+}
+.a4-display span{color:var(--accent)}
+.tuner-level-wrap{
+  display:flex;align-items:center;gap:8px;
+  width:100%;max-width:200px;margin:10px 0 0;
+}
+.tuner-level-track{
+  flex:1;height:4px;background:var(--surface2);
+  border-radius:2px;overflow:hidden;
+}
+.tuner-level-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--accent),var(--success));
+  border-radius:2px;transition:width .06s ease;
+}
+.tuner-str-label{font-size:12px;color:var(--muted);margin-top:3px;min-height:16px}
+@keyframes inTunePulse{
+  0%,100%{text-shadow:none}
+  50%{text-shadow:0 0 32px var(--success),0 0 14px var(--success)}
+}
+.tuner-note.in-tune{animation:inTunePulse .7s ease-in-out infinite}
 .string-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
   width:100%;max-width:300px;
@@ -565,14 +598,22 @@ a{color:var(--accent)}
     <h2 style="font-size:17px;font-weight:700">🎵 튜닝하기</h2>
   </div>
 
-  <!-- 줄 버튼 — 감지된 줄 자동 하이라이트 -->
-  <div class="string-grid" style="padding:14px 20px 0;width:100%;max-width:320px">
-    <button class="string-btn" id="str-0" onclick="playRef(82.41,'E2',this)"><span class="sn">E</span><span class="sl">6번줄 · E2</span></button>
-    <button class="string-btn" id="str-1" onclick="playRef(110,'A2',this)"><span class="sn">A</span><span class="sl">5번줄 · A2</span></button>
-    <button class="string-btn" id="str-2" onclick="playRef(146.83,'D3',this)"><span class="sn">D</span><span class="sl">4번줄 · D3</span></button>
-    <button class="string-btn" id="str-3" onclick="playRef(196,'G3',this)"><span class="sn">G</span><span class="sl">3번줄 · G3</span></button>
-    <button class="string-btn" id="str-4" onclick="playRef(246.94,'B3',this)"><span class="sn">B</span><span class="sl">2번줄 · B3</span></button>
-    <button class="string-btn" id="str-5" onclick="playRef(329.63,'E4',this)"><span class="sn">E</span><span class="sl">1번줄 · E4</span></button>
+  <!-- A4 기준음 -->
+  <div class="a4-row">
+    <span class="a4-label">A4</span>
+    <button class="a4-adj" onclick="adjustA4(-1)">−</button>
+    <div class="a4-display">= <span id="a4-val">440</span> Hz</div>
+    <button class="a4-adj" onclick="adjustA4(+1)">+</button>
+  </div>
+
+  <!-- 줄 버튼 — 감지된 줄 자동 하이라이트, 탭 시 A4 기준 재계산 -->
+  <div class="string-grid" style="padding:12px 20px 0;width:100%;max-width:320px">
+    <button class="string-btn" id="str-0" onclick="playRefNote('E2',this)"><span class="sn">E</span><span class="sl">6번줄 · E2</span></button>
+    <button class="string-btn" id="str-1" onclick="playRefNote('A2',this)"><span class="sn">A</span><span class="sl">5번줄 · A2</span></button>
+    <button class="string-btn" id="str-2" onclick="playRefNote('D3',this)"><span class="sn">D</span><span class="sl">4번줄 · D3</span></button>
+    <button class="string-btn" id="str-3" onclick="playRefNote('G3',this)"><span class="sn">G</span><span class="sl">3번줄 · G3</span></button>
+    <button class="string-btn" id="str-4" onclick="playRefNote('B3',this)"><span class="sn">B</span><span class="sl">2번줄 · B3</span></button>
+    <button class="string-btn" id="str-5" onclick="playRefNote('E4',this)"><span class="sn">E</span><span class="sl">1번줄 · E4</span></button>
   </div>
 
   <!-- 반원 다이얼 -->
@@ -592,14 +633,22 @@ a{color:var(--accent)}
       <path d="M 10 128 A 120 120 0 0 1 250 128" fill="none" stroke="var(--surface2)" stroke-width="14" stroke-linecap="round"/>
       <!-- 컬러 아크 -->
       <path d="M 10 128 A 120 120 0 0 1 250 128" fill="none" stroke="url(#arc-grad)" stroke-width="6" stroke-linecap="round" opacity="0.65"/>
-      <!-- 중앙 눈금 -->
-      <line x1="130" y1="12" x2="130" y2="4" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>
-      <!-- ±25 cents 눈금 -->
-      <line x1="44"  y1="73" x2="38"  y2="66" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="216" y1="73" x2="222" y2="66" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- ±50 라벨 -->
-      <text x="6"   y="144" font-size="9" fill="var(--muted)" text-anchor="middle">♭</text>
-      <text x="254" y="144" font-size="9" fill="var(--muted)" text-anchor="middle">♯</text>
+      <!-- 매 10¢ 눈금 (rotate 기법: 1¢ = 1.8°) -->
+      <g stroke="var(--border)" stroke-width="1.5" stroke-linecap="round">
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(-72,130,128)"/>
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(-54,130,128)"/>
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(-36,130,128)"/>
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(-18,130,128)"/>
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(18,130,128)"/>
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(36,130,128)"/>
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(54,130,128)"/>
+        <line x1="130" y1="4" x2="130" y2="13" transform="rotate(72,130,128)"/>
+      </g>
+      <!-- 0¢ 중앙 눈금 (강조) -->
+      <line x1="130" y1="2" x2="130" y2="17" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+      <!-- ♭ ♯ 라벨 -->
+      <text x="6"   y="143" font-size="9" fill="var(--muted)" text-anchor="middle">♭</text>
+      <text x="254" y="143" font-size="9" fill="var(--muted)" text-anchor="middle">♯</text>
     </svg>
     <div class="tuner-needle-pivot" id="tuner-needle-pivot">
       <div class="tuner-needle-rod" id="tuner-needle-rod"></div>
@@ -609,11 +658,20 @@ a{color:var(--accent)}
 
   <!-- 수치 표시 -->
   <div class="tuner-note" id="tuner-note">—</div>
+  <div class="tuner-str-label" id="tuner-str-label"></div>
   <div class="tuner-cents" id="tuner-cents">0 cents</div>
   <div class="tuner-freq" id="tuner-freq">— Hz</div>
-  <div class="tuner-verdict" id="tuner-verdict">—</div>
 
-  <button class="tuner-toggle" id="tuner-toggle-btn" onclick="toggleTuner()" style="margin-top:14px">🎤 튜너 시작</button>
+  <!-- 마이크 레벨 -->
+  <div class="tuner-level-wrap">
+    <span style="font-size:11px">🎤</span>
+    <div class="tuner-level-track">
+      <div class="tuner-level-fill" id="tuner-level-fill"></div>
+    </div>
+  </div>
+
+  <div class="tuner-verdict" id="tuner-verdict">—</div>
+  <button class="tuner-toggle" id="tuner-toggle-btn" onclick="toggleTuner()" style="margin-top:12px">🎤 튜너 시작</button>
   <div class="tuner-status" id="tuner-status"></div>
 </div>
 
@@ -1138,9 +1196,12 @@ function closePreview() {
 let tAudio = null, tAnalyser = null, tInterval = null, tActive = false, tStream = null
 let refOsc = null, activeRefBtn = null
 const PITCH_BUF = []   // median filter history
+let A4_REF = 440
 
 const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
-const STRING_MAP = { 'E2':'str-0', 'A2':'str-1', 'D3':'str-2', 'G3':'str-3', 'B3':'str-4', 'E4':'str-5' }
+const STRING_MAP  = { 'E2':'str-0', 'A2':'str-1', 'D3':'str-2', 'G3':'str-3', 'B3':'str-4', 'E4':'str-5' }
+const STRING_MIDI = { 'E2':40, 'A2':45, 'D3':50, 'G3':55, 'B3':59, 'E4':64 }
+const STRING_NAME = { 'E2':'6번줄', 'A2':'5번줄', 'D3':'4번줄', 'G3':'3번줄', 'B3':'2번줄', 'E4':'1번줄' }
 
 // McLeod Pitch Method — NSDF + parabolic interpolation
 function detectPitch(buf, sr) {
@@ -1202,10 +1263,21 @@ function stablePitch(freq) {
 }
 
 function freqToNote(freq) {
-  const midi = Math.round(12 * Math.log2(freq / 440) + 69)
-  const exact = 440 * Math.pow(2, (midi - 69) / 12)
+  const midi = Math.round(12 * Math.log2(freq / A4_REF) + 69)
+  const exact = A4_REF * Math.pow(2, (midi - 69) / 12)
   const cents = Math.round(1200 * Math.log2(freq / exact))
   return { name: NOTES[((midi % 12) + 12) % 12], octave: Math.floor(midi / 12) - 1, cents }
+}
+
+function adjustA4(delta) {
+  A4_REF = Math.max(430, Math.min(450, A4_REF + delta))
+  document.getElementById('a4-val').textContent = A4_REF
+  PITCH_BUF.length = 0
+}
+
+function playRefNote(note, btn) {
+  const freq = A4_REF * Math.pow(2, (STRING_MIDI[note] - 69) / 12)
+  playRef(freq, note, btn)
 }
 
 async function toggleTuner() {
@@ -1243,31 +1315,42 @@ function tunerLoop() {
   if (!tActive) return
   const buf = new Float32Array(tAnalyser.fftSize)
   tAnalyser.getFloatTimeDomainData(buf)
+
+  // 마이크 레벨 바
+  let rms = 0
+  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i]
+  rms = Math.sqrt(rms / buf.length)
+  document.getElementById('tuner-level-fill').style.width = Math.min(100, rms * 700) + '%'
+
   const freq = stablePitch(detectPitch(buf, tAudio.sampleRate))
   const noteEl = document.getElementById('tuner-note')
   const pivot  = document.getElementById('tuner-needle-pivot')
   const rod    = document.getElementById('tuner-needle-rod')
+
   if (freq > 0) {
     const n = freqToNote(freq)
-    noteEl.textContent = n.name + n.octave
+    const key = n.name + n.octave
+    noteEl.textContent = key
     document.getElementById('tuner-freq').textContent = freq.toFixed(1) + ' Hz'
     document.getElementById('tuner-cents').textContent = (n.cents > 0 ? '+' : '') + n.cents + ' cents'
-    // 바늘 회전: ±50 cents → ±90°
     pivot.style.transform = `rotate(${Math.max(-90, Math.min(90, n.cents * 1.8))}deg)`
     const abs = Math.abs(n.cents)
     const col = abs < 5 ? 'var(--success)' : abs < 15 ? 'var(--accent)' : 'var(--danger)'
     rod.style.background = col
     noteEl.style.color = col
+    noteEl.classList.toggle('in-tune', abs < 5)
     document.getElementById('tuner-cents').style.color = col
+    document.getElementById('tuner-str-label').textContent = STRING_NAME[key] || ''
     document.getElementById('tuner-verdict').textContent = abs < 5 ? '✓ 정확해요' : n.cents < 0 ? '♭ 낮아요' : '♯ 높아요'
     document.getElementById('tuner-status').textContent = ''
-    // 감지된 줄 자동 하이라이트
     document.querySelectorAll('.string-btn').forEach(b => b.classList.remove('auto-detected'))
-    const strId = STRING_MAP[n.name + n.octave]
+    const strId = STRING_MAP[key]
     if (strId) document.getElementById(strId).classList.add('auto-detected')
   } else {
     noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
+    noteEl.classList.remove('in-tune')
     document.getElementById('tuner-cents').style.color = 'var(--muted)'
+    document.getElementById('tuner-str-label').textContent = ''
     document.getElementById('tuner-verdict').textContent = '—'
     document.getElementById('tuner-status').textContent = '기타 줄을 튕겨보세요'
     document.querySelectorAll('.string-btn').forEach(b => b.classList.remove('auto-detected'))
@@ -1284,6 +1367,7 @@ function stopTuner() {
   btn.textContent = '🎤 튜너 시작'; btn.classList.remove('on'); btn.disabled = false
   const noteEl = document.getElementById('tuner-note')
   noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
+  noteEl.classList.remove('in-tune')
   document.getElementById('tuner-needle-pivot').style.transform = 'rotate(0deg)'
   document.getElementById('tuner-needle-rod').style.background = 'var(--accent)'
   document.getElementById('tuner-verdict').textContent = '—'
@@ -1291,6 +1375,8 @@ function stopTuner() {
   document.getElementById('tuner-cents').textContent = '0 cents'
   document.getElementById('tuner-cents').style.color = 'var(--muted)'
   document.getElementById('tuner-freq').textContent = '— Hz'
+  document.getElementById('tuner-str-label').textContent = ''
+  document.getElementById('tuner-level-fill').style.width = '0%'
   document.querySelectorAll('.string-btn').forEach(b => b.classList.remove('auto-detected'))
 }
 
