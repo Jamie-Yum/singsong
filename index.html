@@ -1093,26 +1093,30 @@ function closePreview() {
 }
 
 // ─── TUNER ───────────────────────────────────────────────────────────────────
-let tAudio = null, tAnalyser = null, tFrame = null, tActive = false
+let tAudio = null, tAnalyser = null, tInterval = null, tActive = false, tStream = null
 let refOsc = null, activeRefBtn = null
 
 const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
-function autoCorrelate(buf, sr) {
+// YIN-simplified: 빠르고 정확한 피치 감지
+function detectPitch(buf, sr) {
   let rms = 0
   for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i]
-  rms = Math.sqrt(rms / buf.length)
-  if (rms < 0.01) return -1
-  const half = Math.floor(buf.length / 2)
-  let bestOff = -1, bestCorr = 0, lastCorr = 1
-  for (let off = 0; off < half; off++) {
+  if (Math.sqrt(rms / buf.length) < 0.008) return -1  // 무음
+
+  const SIZE = 1024  // 절반만 사용해 속도 향상
+  let bestOff = -1, bestCorr = 0, lastCorr = 1, found = false
+
+  for (let off = 1; off < SIZE; off++) {
     let corr = 0
-    for (let i = 0; i < half; i++) corr += Math.abs(buf[i] - buf[i+off])
-    corr = 1 - corr / half
-    if (corr > 0.9 && corr > lastCorr) { bestCorr = corr; bestOff = off }
+    for (let i = 0; i < SIZE; i++) corr += buf[i] * buf[i + off]
+    corr /= SIZE
+    if (!found && corr > 0.85 && corr > lastCorr) { bestOff = off; found = true }
+    if (found && corr > bestCorr) { bestCorr = corr; bestOff = off }
+    if (found && corr < lastCorr * 0.5) break  // 피크 지나면 조기 종료
     lastCorr = corr
   }
-  return bestOff > 0 ? sr / bestOff : -1
+  return bestOff > 0 && bestCorr > 0.7 ? sr / bestOff : -1
 }
 
 function freqToNote(freq) {
@@ -1124,19 +1128,28 @@ function freqToNote(freq) {
 
 async function toggleTuner() {
   if (tActive) { stopTuner(); return }
+  const btn = document.getElementById('tuner-toggle-btn')
+  const status = document.getElementById('tuner-status')
+  btn.textContent = '⏳ 마이크 연결 중…'
+  btn.disabled = true
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    tStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, video: false })
     tAudio = new AudioContext()
+    if (tAudio.state === 'suspended') await tAudio.resume()
     tAnalyser = tAudio.createAnalyser()
     tAnalyser.fftSize = 2048
-    tAudio.createMediaStreamSource(stream).connect(tAnalyser)
+    tAnalyser.smoothingTimeConstant = 0
+    tAudio.createMediaStreamSource(tStream).connect(tAnalyser)
     tActive = true
-    document.getElementById('tuner-toggle-btn').textContent = '⏹ 튜너 끄기'
-    document.getElementById('tuner-toggle-btn').classList.add('on')
-    document.getElementById('tuner-status').textContent = '마이크 감지 중…'
-    tunerLoop()
-  } catch {
-    document.getElementById('tuner-status').textContent = '마이크 권한이 필요해요'
+    btn.textContent = '⏹ 튜너 끄기'
+    btn.classList.add('on')
+    btn.disabled = false
+    status.textContent = '기타 줄을 튕겨보세요'
+    tInterval = setInterval(tunerLoop, 80)  // 초당 12회 — 모바일에 적합
+  } catch(e) {
+    btn.textContent = '🎤 튜너 시작'
+    btn.disabled = false
+    status.textContent = e.name === 'NotAllowedError' ? '마이크 권한을 허용해주세요' : '마이크를 사용할 수 없어요'
   }
 }
 
@@ -1144,7 +1157,7 @@ function tunerLoop() {
   if (!tActive) return
   const buf = new Float32Array(tAnalyser.fftSize)
   tAnalyser.getFloatTimeDomainData(buf)
-  const freq = autoCorrelate(buf, tAudio.sampleRate)
+  const freq = detectPitch(buf, tAudio.sampleRate)
   const noteEl = document.getElementById('tuner-note')
   const needle = document.getElementById('tuner-needle')
   if (freq > 50 && freq < 1200) {
@@ -1163,14 +1176,14 @@ function tunerLoop() {
   } else {
     noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
     document.getElementById('tuner-verdict').textContent = '—'
-    document.getElementById('tuner-status').textContent = '소리를 감지하지 못했어요…'
+    document.getElementById('tuner-status').textContent = '기타 줄을 튕겨보세요'
   }
-  tFrame = requestAnimationFrame(tunerLoop)
 }
 
 function stopTuner() {
   tActive = false
-  if (tFrame) cancelAnimationFrame(tFrame)
+  if (tInterval) { clearInterval(tInterval); tInterval = null }
+  if (tStream) { tStream.getTracks().forEach(t => t.stop()); tStream = null }
   if (tAudio) { tAudio.close(); tAudio = null }
   document.getElementById('tuner-toggle-btn').textContent = '🎤 튜너 시작'
   document.getElementById('tuner-toggle-btn').classList.remove('on')
