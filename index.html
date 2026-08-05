@@ -381,6 +381,19 @@ a{color:var(--accent)}
   50%{text-shadow:0 0 32px var(--success),0 0 14px var(--success)}
 }
 .tuner-note.in-tune{animation:inTunePulse .7s ease-in-out infinite}
+
+/* CHORD VIEWER */
+.chord-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 16px}
+.chord-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:8px 4px 6px;
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;transition:border-color .15s,background .15s;
+}
+.chord-card:active,.chord-card:hover{border-color:var(--accent);background:var(--surface2)}
+.chord-card-name{font-size:14px;font-weight:700;margin-bottom:4px;font-family:Georgia,serif;font-style:italic}
+.chord-card svg{width:100%;height:auto;display:block}
+.chord-detail-svg svg{width:200px;height:auto;display:block;margin:0 auto}
 .string-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
   width:100%;max-width:300px;
@@ -686,6 +699,19 @@ a{color:var(--accent)}
   </div>
 </div>
 
+<!-- CHORDS -->
+<div class="view" id="view-chords">
+  <div class="sec-hd">
+    <button class="back-btn" onclick="nav('home')">←</button>
+    <h2>🤞 코드 운지법</h2>
+  </div>
+  <div style="padding:0 16px 12px">
+    <input type="text" id="chord-search" placeholder="코드 검색 (예: Am, G7, Cmaj7)…" oninput="searchChords(this.value)">
+  </div>
+  <div class="pill-tabs" id="chord-cats"></div>
+  <div class="chord-grid" id="chord-grid"></div>
+</div>
+
 </div><!-- /main -->
 
 <!-- BOTTOM NAV -->
@@ -695,6 +721,7 @@ a{color:var(--accent)}
   <button class="nav-btn" id="nav-goals" onclick="nav('goals')"><div class="icon">🎯</div>목표</button>
   <button class="nav-btn" id="nav-tuner" onclick="nav('tuner')"><div class="icon">🎵</div>튜닝</button>
   <button class="nav-btn" id="nav-sheets" onclick="nav('sheets')"><div class="icon">📄</div>악보</button>
+  <button class="nav-btn" id="nav-chords" onclick="nav('chords')"><div class="icon">🤞</div>코드</button>
 </nav>
 
 <!-- FAB -->
@@ -743,17 +770,39 @@ a{color:var(--accent)}
 <!-- UPLOAD SHEET MODAL -->
 <div class="modal-ov" id="upload-modal" style="display:none" onclick="if(event.target===this)closeUploadModal()">
   <div class="modal-sheet">
-    <h3>악보 업로드</h3>
+    <h3>악보 추가</h3>
     <div class="form-row"><label>곡 선택 (선택사항)</label>
       <select id="sheet-song-sel"><option value="">— 미분류 —</option></select>
     </div>
-    <div class="form-row"><label>파일 (PDF, 이미지)</label>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="pill-tab active" id="utab-file" onclick="switchUploadTab('file')">📁 파일</button>
+      <button class="pill-tab" id="utab-url" onclick="switchUploadTab('url')">🔗 링크 URL</button>
+    </div>
+    <div id="upload-file-pane" class="form-row">
+      <label>파일 (PDF, 이미지)</label>
       <input type="file" id="sheet-file" accept=".pdf,image/*" style="background:var(--surface2);padding:10px">
+    </div>
+    <div id="upload-url-pane" class="form-row" style="display:none">
+      <label>악보 URL</label>
+      <input type="url" id="sheet-url" placeholder="https://…">
+      <div style="font-size:11px;color:var(--muted);margin-top:5px">이미지, PDF, 또는 외부 악보 링크를 붙여넣으세요</div>
     </div>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-secondary" style="flex:1" onclick="closeUploadModal()">취소</button>
-      <button class="btn btn-primary" style="flex:2" onclick="uploadSheet()">업로드</button>
+      <button class="btn btn-primary" style="flex:2" onclick="uploadSheet()">저장</button>
     </div>
+  </div>
+</div>
+
+<!-- CHORD DETAIL MODAL -->
+<div class="modal-ov" id="chord-modal" style="display:none" onclick="if(event.target===this)closeChordModal()">
+  <div class="modal-sheet" style="text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 id="chord-modal-name" style="font-family:Georgia,serif;font-style:italic;font-size:28px;margin:0"></h3>
+      <button class="btn-icon" onclick="closeChordModal()" style="font-size:18px">✕</button>
+    </div>
+    <div class="chord-detail-svg" id="chord-detail-svg"></div>
+    <div id="chord-detail-hint" style="font-size:12px;color:var(--muted);margin-top:12px;letter-spacing:1px"></div>
   </div>
 </div>
 
@@ -831,7 +880,10 @@ const sb = {
       return r.ok
     } catch { return false }
   },
-  fileUrl(path) { return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}` }
+  fileUrl(path) {
+    if (path && path.startsWith('http')) return path
+    return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`
+  }
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -853,6 +905,7 @@ function nav(v) {
   if (v === 'practice') loadPracticeSongs()
   if (v === 'goals') loadGoalsView()
   if (v === 'sheets') loadSheets()
+  if (v === 'chords') loadChordsView()
   document.getElementById('main').scrollTop = 0
 }
 
@@ -924,7 +977,7 @@ async function selectSong(id, title, artist) {
     <div class="card-title" style="padding:0 16px 6px">📄 연결된 악보</div>
     <div class="sheets-strip">
       ${sheets.map(s => `<div class="sheet-thumb-sm" onclick="previewSheet('${sb.fileUrl(s.storage_path)}','${esc(s.file_name)}')">
-        <div class="th">${s.file_type?.includes('pdf') ? '📄' : '🖼️'}</div>
+        <div class="th">${s.file_type === 'link' ? '🔗' : s.file_type?.includes('pdf') ? '📄' : '🖼️'}</div>
         <div class="tn">${esc(s.file_name)}</div>
       </div>`).join('')}
     </div>` : ''
@@ -1146,14 +1199,17 @@ async function loadSheets() {
   const songMap = Object.fromEntries(allSongs.map(s => [s.id, s.title]))
   const el = document.getElementById('sheets-grid')
   el.innerHTML = S.sheets.length
-    ? S.sheets.map(s => `
+    ? S.sheets.map(s => {
+        const icon = s.file_type === 'link' ? '🔗' : s.file_name.toLowerCase().endsWith('.pdf') ? '📄' : '🖼️'
+        return `
       <div class="sheet-card" onclick="previewSheet('${sb.fileUrl(s.storage_path)}','${esc(s.file_name)}')">
-        <div class="sheet-thumb">${s.file_name.toLowerCase().endsWith('.pdf') ? '📄' : '🖼️'}</div>
+        <div class="sheet-thumb">${icon}</div>
         <div class="sheet-meta">
           <div class="sheet-name">${esc(s.file_name)}</div>
           <div class="sheet-song">${s.song_id ? esc(songMap[s.song_id]||'') : '미분류'}</div>
         </div>
-      </div>`).join('')
+      </div>`
+      }).join('')
     : '<div class="empty" style="grid-column:1/-1">+ 버튼으로 악보를 업로드하세요</div>'
 }
 
@@ -1162,29 +1218,56 @@ async function showUploadModal() {
   document.getElementById('sheet-song-sel').innerHTML =
     '<option value="">— 미분류 —</option>' +
     songs.map(s => `<option value="${s.id}">${esc(s.title)}</option>`).join('')
+  switchUploadTab('file')
   document.getElementById('upload-modal').style.display = 'flex'
 }
-function closeUploadModal() { document.getElementById('upload-modal').style.display = 'none' }
+function closeUploadModal() {
+  document.getElementById('upload-modal').style.display = 'none'
+  document.getElementById('sheet-url').value = ''
+  switchUploadTab('file')
+}
+
+let uploadTab = 'file'
+function switchUploadTab(tab) {
+  uploadTab = tab
+  document.getElementById('utab-file').classList.toggle('active', tab === 'file')
+  document.getElementById('utab-url').classList.toggle('active', tab === 'url')
+  document.getElementById('upload-file-pane').style.display = tab === 'file' ? 'block' : 'none'
+  document.getElementById('upload-url-pane').style.display = tab === 'url' ? 'block' : 'none'
+}
 
 async function uploadSheet() {
-  const file = document.getElementById('sheet-file').files[0]
-  if (!file) { alert('파일을 선택하세요'); return }
   const songId = document.getElementById('sheet-song-sel').value || null
-  const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`
-  const ok = await sb.upload(path, file)
-  if (!ok) { alert('업로드에 실패했어요. 파일 크기나 형식을 확인해주세요.'); return }
-  await sb.post('ssw_sheet_music', { song_id: songId, file_name: file.name, storage_path: path, file_type: file.type })
-  document.getElementById('sheet-file').value = ''
+  if (uploadTab === 'url') {
+    const url = document.getElementById('sheet-url').value.trim()
+    if (!url || !url.startsWith('http')) { alert('올바른 URL을 입력하세요'); return }
+    const base = url.split('?')[0]
+    const name = base.split('/').filter(Boolean).pop() || url
+    const ext = name.split('.').pop().toLowerCase()
+    const type = ['jpg','jpeg','png','gif','webp'].includes(ext) ? 'image/'+ext
+      : ext === 'pdf' ? 'application/pdf' : 'link'
+    await sb.post('ssw_sheet_music', { song_id: songId, file_name: name, storage_path: url, file_type: type })
+  } else {
+    const file = document.getElementById('sheet-file').files[0]
+    if (!file) { alert('파일을 선택하세요'); return }
+    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`
+    const ok = await sb.upload(path, file)
+    if (!ok) { alert('업로드에 실패했어요. 파일 크기나 형식을 확인해주세요.'); return }
+    await sb.post('ssw_sheet_music', { song_id: songId, file_name: file.name, storage_path: path, file_type: file.type })
+    document.getElementById('sheet-file').value = ''
+  }
   closeUploadModal(); loadSheets()
 }
 
 function previewSheet(url, name) {
   document.getElementById('preview-title').textContent = name
   document.getElementById('preview-dl').href = url
-  const isPdf = name.toLowerCase().endsWith('.pdf')
-  document.getElementById('preview-body').innerHTML = isPdf
-    ? `<iframe src="${url}" width="100%" height="100%"></iframe>`
-    : `<img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto">`
+  const ext = url.split('?')[0].split('.').pop().toLowerCase()
+  const isImg = ['jpg','jpeg','png','gif','webp','svg'].includes(ext)
+  const isPdf = ext === 'pdf'
+  document.getElementById('preview-body').innerHTML = isImg
+    ? `<img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto">`
+    : `<iframe src="${url}" width="100%" height="100%" style="border:none"></iframe>`
   document.getElementById('preview-ov').style.display = 'flex'
 }
 function closePreview() {
@@ -1396,6 +1479,137 @@ function playRef(freq, label, btn) {
   refOsc = osc; btn.classList.add('playing'); activeRefBtn = btn
   setTimeout(() => { btn.classList.remove('playing'); if (activeRefBtn === btn) activeRefBtn = null }, 2000)
 }
+
+// ─── CHORDS ──────────────────────────────────────────────────────────────────
+const CHORD_DB = {
+  'C':    { frets:[-1,3,2,0,1,0], fingers:[0,3,2,0,1,0] },
+  'D':    { frets:[-1,-1,0,2,3,2], fingers:[0,0,0,1,3,2] },
+  'E':    { frets:[0,2,2,1,0,0], fingers:[0,2,3,1,0,0] },
+  'F':    { frets:[1,3,3,2,1,1], fingers:[1,3,4,2,1,1], barre:{fret:1,from:0,to:5} },
+  'G':    { frets:[3,2,0,0,3,3], fingers:[3,2,0,0,4,4] },
+  'A':    { frets:[-1,0,2,2,2,0], fingers:[0,0,1,2,3,0] },
+  'B':    { frets:[-1,2,4,4,4,2], fingers:[0,1,3,4,2,1], startFret:2, barre:{fret:2,from:1,to:5} },
+  'Am':   { frets:[-1,0,2,2,1,0], fingers:[0,0,2,3,1,0] },
+  'Bm':   { frets:[-1,2,4,4,3,2], fingers:[0,1,3,4,2,1], startFret:2, barre:{fret:2,from:1,to:5} },
+  'Cm':   { frets:[-1,3,5,5,4,3], fingers:[0,1,3,4,2,1], startFret:3, barre:{fret:3,from:1,to:5} },
+  'Dm':   { frets:[-1,-1,0,2,3,1], fingers:[0,0,0,2,3,1] },
+  'Em':   { frets:[0,2,2,0,0,0], fingers:[0,2,3,0,0,0] },
+  'Fm':   { frets:[1,3,3,1,1,1], fingers:[1,3,4,1,1,1], barre:{fret:1,from:0,to:5} },
+  'Gm':   { frets:[3,1,0,0,3,3], fingers:[3,1,0,0,4,4] },
+  'A7':   { frets:[-1,0,2,0,2,0], fingers:[0,0,2,0,3,0] },
+  'B7':   { frets:[-1,2,1,2,0,2], fingers:[0,2,1,3,0,4] },
+  'C7':   { frets:[-1,3,2,3,1,0], fingers:[0,3,2,4,1,0] },
+  'D7':   { frets:[-1,-1,0,2,1,2], fingers:[0,0,0,2,1,3] },
+  'E7':   { frets:[0,2,0,1,0,0], fingers:[0,2,0,1,0,0] },
+  'G7':   { frets:[3,2,0,0,0,1], fingers:[3,2,0,0,0,1] },
+  'Am7':  { frets:[-1,0,2,0,1,0], fingers:[0,0,2,0,1,0] },
+  'Dm7':  { frets:[-1,-1,0,2,1,1], fingers:[0,0,0,2,1,1] },
+  'Em7':  { frets:[0,2,0,0,0,0], fingers:[0,1,0,0,0,0] },
+  'Cmaj7':{ frets:[-1,3,2,0,0,0], fingers:[0,3,2,0,0,0] },
+  'Dmaj7':{ frets:[-1,-1,0,2,2,2], fingers:[0,0,0,1,2,3] },
+  'Emaj7':{ frets:[0,2,1,1,0,0], fingers:[0,3,2,1,0,0] },
+  'Fmaj7':{ frets:[-1,-1,3,2,1,0], fingers:[0,0,3,2,1,0] },
+  'Gmaj7':{ frets:[3,2,0,0,0,2], fingers:[3,2,0,0,0,1] },
+  'Amaj7':{ frets:[-1,0,2,1,2,0], fingers:[0,0,2,1,3,0] },
+  'Cadd9':{ frets:[-1,3,2,0,3,3], fingers:[0,3,2,0,4,4] },
+  'Dsus2':{ frets:[-1,-1,0,2,3,0], fingers:[0,0,0,1,3,0] },
+  'Asus2':{ frets:[-1,0,2,2,0,0], fingers:[0,0,1,2,0,0] },
+}
+const CHORD_CATS = {
+  '메이저': ['C','D','E','F','G','A','B'],
+  '마이너': ['Am','Bm','Cm','Dm','Em','Fm','Gm'],
+  '7th':    ['A7','B7','C7','D7','E7','G7','Am7','Dm7','Em7'],
+  '기타':   ['Cmaj7','Dmaj7','Emaj7','Fmaj7','Gmaj7','Amaj7','Cadd9','Dsus2','Asus2'],
+}
+let chordCat = '메이저'
+
+function chordSVG(chord) {
+  const W = 70, H = 90
+  const SX = [5, 17, 29, 41, 53, 65]
+  const TOP = 20, FS = 16, NF = 4
+  const BOT = TOP + NF * FS
+  const R = 6
+  const sf = chord.startFret || 1
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`
+  if (sf === 1) {
+    svg += `<rect x="${SX[0]}" y="${TOP-4}" width="${SX[5]-SX[0]}" height="4" rx="1" fill="var(--text)" opacity=".75"/>`
+  } else {
+    svg += `<text x="${W-2}" y="${TOP+5}" text-anchor="end" font-size="7" fill="var(--muted)">${sf}fr</text>`
+    svg += `<line x1="${SX[0]}" y1="${TOP}" x2="${SX[5]}" y2="${TOP}" stroke="var(--border)" stroke-width="1.5"/>`
+  }
+  for (let i = 1; i <= NF; i++) {
+    const y = TOP + i * FS
+    svg += `<line x1="${SX[0]}" y1="${y}" x2="${SX[5]}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`
+  }
+  SX.forEach(x => {
+    svg += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOT}" stroke="var(--border)" stroke-width="1"/>`
+  })
+  if (chord.barre) {
+    const bRel = chord.barre.fret - sf + 1
+    const by = TOP + (bRel - 0.5) * FS
+    svg += `<rect x="${SX[chord.barre.from]}" y="${by-5}" width="${SX[chord.barre.to]-SX[chord.barre.from]}" height="10" rx="5" fill="var(--accent)" opacity=".85"/>`
+  }
+  chord.frets.forEach((fret, i) => {
+    const x = SX[i]
+    if (fret < 0) {
+      svg += `<text x="${x}" y="14" text-anchor="middle" font-size="9" fill="var(--muted)">×</text>`
+    } else if (fret === 0) {
+      svg += `<circle cx="${x}" cy="11" r="4" fill="none" stroke="var(--text)" stroke-width="1.2" opacity=".6"/>`
+    } else {
+      const relFret = fret - sf + 1
+      if (relFret < 1 || relFret > NF) return
+      if (chord.barre && chord.barre.fret === fret && i >= chord.barre.from && i <= chord.barre.to) return
+      const fy = TOP + (relFret - 0.5) * FS
+      svg += `<circle cx="${x}" cy="${fy}" r="${R}" fill="var(--accent)"/>`
+      if (chord.fingers?.[i]) {
+        svg += `<text x="${x}" y="${fy+2.5}" text-anchor="middle" dominant-baseline="middle" font-size="6" fill="#000" font-weight="700">${chord.fingers[i]}</text>`
+      }
+    }
+  })
+  svg += '</svg>'
+  return svg
+}
+
+function loadChordsView() {
+  const catEl = document.getElementById('chord-cats')
+  catEl.innerHTML = Object.keys(CHORD_CATS).map(c =>
+    `<button class="pill-tab ${c===chordCat?'active':''}" onclick="selectChordCat('${c}',this)">${c}</button>`
+  ).join('')
+  renderChordGrid(CHORD_CATS[chordCat])
+}
+
+function selectChordCat(cat, btn) {
+  chordCat = cat
+  document.querySelectorAll('#chord-cats .pill-tab').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  renderChordGrid(CHORD_CATS[cat])
+  document.getElementById('chord-search').value = ''
+}
+
+function renderChordGrid(names) {
+  document.getElementById('chord-grid').innerHTML = names.map(name =>
+    `<div class="chord-card" onclick="openChordModal('${name}')">
+      <div class="chord-card-name">${name}</div>
+      ${chordSVG(CHORD_DB[name])}
+    </div>`
+  ).join('')
+}
+
+function searchChords(q) {
+  const lq = q.toLowerCase().trim()
+  if (!lq) { renderChordGrid(CHORD_CATS[chordCat]); return }
+  renderChordGrid(Object.keys(CHORD_DB).filter(n => n.toLowerCase().includes(lq)))
+}
+
+function openChordModal(name) {
+  const ch = CHORD_DB[name]
+  document.getElementById('chord-modal-name').textContent = name
+  document.getElementById('chord-detail-svg').innerHTML = chordSVG(ch)
+  document.getElementById('chord-detail-hint').textContent =
+    ch.frets.map(f => f < 0 ? 'x' : f === 0 ? 'o' : f).join(' - ')
+  document.getElementById('chord-modal').style.display = 'flex'
+}
+function closeChordModal() { document.getElementById('chord-modal').style.display = 'none' }
 
 // ─── UTILS ───────────────────────────────────────────────────────────────────
 function esc(s) {
