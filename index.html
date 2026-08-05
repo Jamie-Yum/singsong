@@ -305,37 +305,48 @@ a{color:var(--accent)}
 #view-tuner{display:none}
 #view-tuner.active{
   display:flex;flex-direction:column;align-items:center;
-  padding:0 20px 20px;
+  padding:0 16px 24px;
 }
 .tuner-note{
   font-family:Georgia,'Palatino Linotype',serif;font-style:italic;
-  font-size:100px;font-weight:normal;line-height:1;
-  color:var(--muted);transition:color .08s;
-  margin:10px 0 0;
+  font-size:84px;font-weight:normal;line-height:1;
+  color:var(--muted);transition:color .1s;
+  margin:6px 0 0;
 }
-.tuner-freq{font-size:13px;color:var(--muted);margin-top:-4px}
-.tuner-cents{font-size:15px;font-weight:600;margin:6px 0}
-.tuner-gauge{
-  width:100%;max-width:300px;height:10px;
-  background:var(--surface2);border-radius:5px;
-  position:relative;overflow:hidden;margin:10px 0 4px;
+.tuner-freq{font-size:12px;color:var(--muted);margin-top:2px}
+.tuner-cents{font-size:20px;font-weight:700;margin:4px 0 0;transition:color .1s;color:var(--muted)}
+.tuner-verdict{font-size:13px;color:var(--muted);min-height:20px;margin:6px 0 0}
+.tuner-dial-wrap{
+  position:relative;width:260px;height:140px;
+  margin:14px auto 0;flex-shrink:0;
 }
-.tuner-gauge-track{
-  position:absolute;inset:0;
-  background:linear-gradient(90deg,var(--danger) 0%,var(--accent) 45%,var(--success) 50%,var(--accent) 55%,var(--danger) 100%);
-  opacity:.3;
+.tuner-dial-svg{width:100%;height:100%}
+.tuner-needle-pivot{
+  position:absolute;bottom:12px;left:50%;
+  width:4px;height:120px;margin-left:-2px;
+  transform-origin:50% 100%;
+  transform:rotate(0deg);
+  transition:transform .12s ease;
+  pointer-events:none;
 }
-.tuner-needle{
-  position:absolute;top:-2px;bottom:-2px;width:4px;
-  border-radius:2px;background:var(--accent);
-  transform:translateX(-50%);left:50%;transition:left .08s,background .08s;
+.tuner-needle-rod{
+  position:absolute;bottom:0;left:0;
+  width:3px;height:100%;
+  background:var(--accent);
+  border-radius:2px 2px 0 0;
+  transition:background .1s;
 }
-.tuner-center-mark{
-  position:absolute;top:-3px;bottom:-3px;left:50%;width:2px;
-  background:var(--border);transform:translateX(-50%);
+.tuner-dial-cap{
+  position:absolute;bottom:12px;left:50%;
+  transform:translate(-50%,50%);
+  width:14px;height:14px;border-radius:50%;
+  background:var(--surface);border:2.5px solid var(--accent);
+  pointer-events:none;
 }
-.tuner-verdict{
-  font-size:12px;color:var(--muted);min-height:18px;margin-bottom:14px;
+.string-btn.auto-detected{
+  border-color:var(--accent);
+  background:rgba(232,160,32,.13);
+  color:var(--accent);
 }
 .string-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
@@ -553,25 +564,56 @@ a{color:var(--accent)}
     <button class="back-btn" onclick="nav('home')">←</button>
     <h2 style="font-size:17px;font-weight:700">🎵 튜닝하기</h2>
   </div>
+
+  <!-- 줄 버튼 — 감지된 줄 자동 하이라이트 -->
+  <div class="string-grid" style="padding:14px 20px 0;width:100%;max-width:320px">
+    <button class="string-btn" id="str-0" onclick="playRef(82.41,'E2',this)"><span class="sn">E</span><span class="sl">6번줄 · E2</span></button>
+    <button class="string-btn" id="str-1" onclick="playRef(110,'A2',this)"><span class="sn">A</span><span class="sl">5번줄 · A2</span></button>
+    <button class="string-btn" id="str-2" onclick="playRef(146.83,'D3',this)"><span class="sn">D</span><span class="sl">4번줄 · D3</span></button>
+    <button class="string-btn" id="str-3" onclick="playRef(196,'G3',this)"><span class="sn">G</span><span class="sl">3번줄 · G3</span></button>
+    <button class="string-btn" id="str-4" onclick="playRef(246.94,'B3',this)"><span class="sn">B</span><span class="sl">2번줄 · B3</span></button>
+    <button class="string-btn" id="str-5" onclick="playRef(329.63,'E4',this)"><span class="sn">E</span><span class="sl">1번줄 · E4</span></button>
+  </div>
+
+  <!-- 반원 다이얼 -->
+  <div class="tuner-dial-wrap">
+    <svg class="tuner-dial-svg" viewBox="0 0 260 140" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="arc-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#f87171"/>
+          <stop offset="32%"  stop-color="#e8a020"/>
+          <stop offset="44%"  stop-color="#4ade80"/>
+          <stop offset="56%"  stop-color="#4ade80"/>
+          <stop offset="68%"  stop-color="#e8a020"/>
+          <stop offset="100%" stop-color="#f87171"/>
+        </linearGradient>
+      </defs>
+      <!-- 트랙 -->
+      <path d="M 10 128 A 120 120 0 0 1 250 128" fill="none" stroke="var(--surface2)" stroke-width="14" stroke-linecap="round"/>
+      <!-- 컬러 아크 -->
+      <path d="M 10 128 A 120 120 0 0 1 250 128" fill="none" stroke="url(#arc-grad)" stroke-width="6" stroke-linecap="round" opacity="0.65"/>
+      <!-- 중앙 눈금 -->
+      <line x1="130" y1="12" x2="130" y2="4" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>
+      <!-- ±25 cents 눈금 -->
+      <line x1="44"  y1="73" x2="38"  y2="66" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="216" y1="73" x2="222" y2="66" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- ±50 라벨 -->
+      <text x="6"   y="144" font-size="9" fill="var(--muted)" text-anchor="middle">♭</text>
+      <text x="254" y="144" font-size="9" fill="var(--muted)" text-anchor="middle">♯</text>
+    </svg>
+    <div class="tuner-needle-pivot" id="tuner-needle-pivot">
+      <div class="tuner-needle-rod" id="tuner-needle-rod"></div>
+    </div>
+    <div class="tuner-dial-cap"></div>
+  </div>
+
+  <!-- 수치 표시 -->
   <div class="tuner-note" id="tuner-note">—</div>
+  <div class="tuner-cents" id="tuner-cents">0 cents</div>
   <div class="tuner-freq" id="tuner-freq">— Hz</div>
-  <div class="tuner-cents" id="tuner-cents" style="color:var(--muted)">0 cents</div>
-  <div class="tuner-gauge">
-    <div class="tuner-gauge-track"></div>
-    <div class="tuner-center-mark"></div>
-    <div class="tuner-needle" id="tuner-needle"></div>
-  </div>
   <div class="tuner-verdict" id="tuner-verdict">—</div>
-  <div style="font-size:11px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px">기준음 듣기</div>
-  <div class="string-grid">
-    <button class="string-btn" onclick="playRef(82.41,'E2',this)"><span class="sn">E</span><span class="sl">6번줄 · E2</span></button>
-    <button class="string-btn" onclick="playRef(110,'A2',this)"><span class="sn">A</span><span class="sl">5번줄 · A2</span></button>
-    <button class="string-btn" onclick="playRef(146.83,'D3',this)"><span class="sn">D</span><span class="sl">4번줄 · D3</span></button>
-    <button class="string-btn" onclick="playRef(196,'G3',this)"><span class="sn">G</span><span class="sl">3번줄 · G3</span></button>
-    <button class="string-btn" onclick="playRef(246.94,'B3',this)"><span class="sn">B</span><span class="sl">2번줄 · B3</span></button>
-    <button class="string-btn" onclick="playRef(329.63,'E4',this)"><span class="sn">E</span><span class="sl">1번줄 · E4</span></button>
-  </div>
-  <button class="tuner-toggle" id="tuner-toggle-btn" onclick="toggleTuner()">🎤 튜너 시작</button>
+
+  <button class="tuner-toggle" id="tuner-toggle-btn" onclick="toggleTuner()" style="margin-top:14px">🎤 튜너 시작</button>
   <div class="tuner-status" id="tuner-status"></div>
 </div>
 
@@ -1098,6 +1140,7 @@ let refOsc = null, activeRefBtn = null
 const PITCH_BUF = []   // median filter history
 
 const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+const STRING_MAP = { 'E2':'str-0', 'A2':'str-1', 'D3':'str-2', 'G3':'str-3', 'B3':'str-4', 'E4':'str-5' }
 
 // McLeod Pitch Method — NSDF + parabolic interpolation
 function detectPitch(buf, sr) {
@@ -1202,22 +1245,32 @@ function tunerLoop() {
   tAnalyser.getFloatTimeDomainData(buf)
   const freq = stablePitch(detectPitch(buf, tAudio.sampleRate))
   const noteEl = document.getElementById('tuner-note')
-  const needle = document.getElementById('tuner-needle')
+  const pivot  = document.getElementById('tuner-needle-pivot')
+  const rod    = document.getElementById('tuner-needle-rod')
   if (freq > 0) {
     const n = freqToNote(freq)
     noteEl.textContent = n.name + n.octave
     document.getElementById('tuner-freq').textContent = freq.toFixed(1) + ' Hz'
     document.getElementById('tuner-cents').textContent = (n.cents > 0 ? '+' : '') + n.cents + ' cents'
-    needle.style.left = Math.max(5, Math.min(95, 50 + (n.cents / 50) * 44)) + '%'
+    // 바늘 회전: ±50 cents → ±90°
+    pivot.style.transform = `rotate(${Math.max(-90, Math.min(90, n.cents * 1.8))}deg)`
     const abs = Math.abs(n.cents)
     const col = abs < 5 ? 'var(--success)' : abs < 15 ? 'var(--accent)' : 'var(--danger)'
-    needle.style.background = col; noteEl.style.color = col
+    rod.style.background = col
+    noteEl.style.color = col
+    document.getElementById('tuner-cents').style.color = col
     document.getElementById('tuner-verdict').textContent = abs < 5 ? '✓ 정확해요' : n.cents < 0 ? '♭ 낮아요' : '♯ 높아요'
     document.getElementById('tuner-status').textContent = ''
+    // 감지된 줄 자동 하이라이트
+    document.querySelectorAll('.string-btn').forEach(b => b.classList.remove('auto-detected'))
+    const strId = STRING_MAP[n.name + n.octave]
+    if (strId) document.getElementById(strId).classList.add('auto-detected')
   } else {
     noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
+    document.getElementById('tuner-cents').style.color = 'var(--muted)'
     document.getElementById('tuner-verdict').textContent = '—'
     document.getElementById('tuner-status').textContent = '기타 줄을 튕겨보세요'
+    document.querySelectorAll('.string-btn').forEach(b => b.classList.remove('auto-detected'))
   }
 }
 
@@ -1231,12 +1284,14 @@ function stopTuner() {
   btn.textContent = '🎤 튜너 시작'; btn.classList.remove('on'); btn.disabled = false
   const noteEl = document.getElementById('tuner-note')
   noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
-  document.getElementById('tuner-needle').style.left = '50%'
-  document.getElementById('tuner-needle').style.background = 'var(--accent)'
+  document.getElementById('tuner-needle-pivot').style.transform = 'rotate(0deg)'
+  document.getElementById('tuner-needle-rod').style.background = 'var(--accent)'
   document.getElementById('tuner-verdict').textContent = '—'
   document.getElementById('tuner-status').textContent = ''
   document.getElementById('tuner-cents').textContent = '0 cents'
+  document.getElementById('tuner-cents').style.color = 'var(--muted)'
   document.getElementById('tuner-freq').textContent = '— Hz'
+  document.querySelectorAll('.string-btn').forEach(b => b.classList.remove('auto-detected'))
 }
 
 function playRef(freq, label, btn) {
