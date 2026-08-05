@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -9,376 +9,612 @@
 <meta name="apple-mobile-web-app-title" content="Singer Songwriter">
 <meta name="theme-color" content="#0d0d12">
 <link rel="manifest" href="./manifest.json">
-<title>I'm a Singer Songwriter</title>
+</head>
+<body><title>I'm a Singer Songwriter</title>
 <style>
+/* Design tokens */
 :root {
-  --bg: #0d0d0d;
-  --card: #1a1a1a;
-  --card2: #222;
-  --accent: #f59e0b;
-  --accent2: #d97706;
-  --blue: #3b82f6;
-  --purple: #8b5cf6;
-  --green: #10b981;
-  --text: #f0f0f0;
-  --muted: #888;
-  --border: #2a2a2a;
-  --danger: #ef4444;
-  --nav-h: 64px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #0d0d12;
+  --surface: #16161b;
+  --surface2: #1e1e24;
+  --border: #2a2a32;
+  --accent: #e8a020;
+  --accent-dim: #c4861a;
+  --accent-glow: rgba(232,160,32,0.12);
+  --text: #f2f0ec;
+  --muted: #857e76;
+  --success: #4ade80;
+  --danger: #f87171;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --nav-h: 68px;
 }
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f8f6f1;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #e0dbd0;
+    --text: #1a1915;
+    --muted: #8a8178;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d0d12; --surface: #16161b; --surface2: #1e1e24;
+  --border: #2a2a32; --text: #f2f0ec; --muted: #857e76;
+}
+:root[data-theme="light"] {
+  --bg: #f8f6f1; --surface: #ffffff; --surface2: #f0ede6;
+  --border: #e0dbd0; --text: #1a1915; --muted: #8a8178;
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
-#main{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + var(--safe-bottom))}
-.view{display:none;padding:0 0 16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+#main{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:var(--nav-h)}
+.view{display:none}
 .view.active{display:block}
 button{cursor:pointer;border:none;outline:none;font-family:inherit}
-input,textarea,select{font-family:inherit;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;width:100%;font-size:14px}
+input,textarea,select{
+  font-family:inherit;background:var(--surface2);
+  border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:10px 12px;width:100%;font-size:14px;
+  transition:border-color .15s;
+}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
-select option{background:#222}
+select option{background:var(--surface)}
 textarea{resize:vertical;min-height:80px}
-label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase;font-weight:500}
+a{color:var(--accent)}
 
-/* NAV */
-#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:#111;border-top:1px solid var(--border);display:flex;z-index:100}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;color:var(--muted);font-size:10px;transition:color .2s}
+/* BOTTOM NAV */
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;z-index:100;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;background:none;color:var(--muted);
+  font-size:10px;font-weight:500;transition:color .2s;
+  padding-bottom:4px;position:relative;
+}
 .nav-btn.active{color:var(--accent)}
-.nav-btn .icon{font-size:22px;line-height:1}
+.nav-btn.active::before{
+  content:'';position:absolute;top:0;left:25%;right:25%;height:2px;
+  background:var(--accent);border-radius:0 0 2px 2px;
+}
+.nav-btn .icon{font-size:20px;line-height:1}
 
 /* HOME */
-#view-home{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - var(--nav-h));padding:32px 20px;text-align:center}
-.home-title{font-size:28px;font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin-bottom:8px}
-.home-title span{color:var(--accent)}
-.home-sub{color:var(--muted);font-size:14px;margin-bottom:40px}
-.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:360px}
-.home-card{background:var(--card);border-radius:16px;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:transform .15s,box-shadow .15s;border:1px solid var(--border)}
-.home-card:active{transform:scale(0.97)}
-.home-card .hc-icon{font-size:36px}
-.home-card .hc-label{font-size:14px;font-weight:600}
-.home-card.amber{border-color:#f59e0b44}
-.home-card.blue{border-color:#3b82f644}
-.home-card.purple{border-color:#8b5cf644}
-.home-card.green{border-color:#10b98144}
+#view-home{
+  display:none;min-height:calc(100vh - var(--nav-h));
+  padding:0 0 20px;
+}
+#view-home.active{display:block}
+.home-hero{
+  padding:52px 24px 40px;position:relative;overflow:hidden;
+}
+.home-strings{
+  position:absolute;inset:0;pointer-events:none;
+}
+.home-strings span{
+  display:block;position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(232,160,32,.15),transparent);
+}
+.home-title-eyebrow{
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);font-weight:600;margin-bottom:12px;
+}
+.home-title{
+  font-family:Georgia,'Palatino Linotype','Book Antiqua',Palatino,serif;
+  font-style:italic;font-size:38px;font-weight:normal;
+  line-height:1.15;text-wrap:balance;
+  color:var(--text);
+}
+.home-title em{color:var(--accent);font-style:italic}
+.home-sub{
+  margin-top:10px;font-size:14px;color:var(--muted);font-weight:400;
+}
+.home-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  padding:0 16px;margin-top:4px;
+}
+.home-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:20px 16px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  cursor:pointer;transition:border-color .2s,background .2s;
+  position:relative;overflow:hidden;
+}
+.home-card::after{
+  content:'';position:absolute;inset:0;
+  background:var(--accent-glow);opacity:0;transition:opacity .2s;
+}
+.home-card:hover::after,.home-card:active::after{opacity:1}
+.home-card .hc-icon{font-size:28px;line-height:1}
+.home-card .hc-label{font-size:13px;font-weight:600;color:var(--text)}
+.home-card .hc-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.home-card.c-amber{border-color:rgba(232,160,32,.25)}
+.home-card.c-blue{border-color:rgba(96,165,250,.2)}
+.home-card.c-purple{border-color:rgba(167,139,250,.2)}
+.home-card.c-green{border-color:rgba(74,222,128,.2)}
 
 /* SECTION HEADER */
-.sec-header{padding:20px 20px 12px;display:flex;align-items:center;gap:10px}
-.sec-header h2{font-size:18px;font-weight:700}
-.sec-header .back-btn{background:var(--card);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:16px;flex-shrink:0}
+.sec-hd{
+  display:flex;align-items:center;gap:10px;
+  padding:18px 16px 14px;
+}
+.sec-hd h2{font-size:17px;font-weight:700}
+.back-btn{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:50%;width:30px;height:30px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text);font-size:14px;
+}
 .px{padding:0 16px}
 
 /* CARDS */
-.card{background:var(--card);border-radius:12px;padding:14px;margin:0 16px 12px;border:1px solid var(--border)}
-.card-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:14px;margin:0 16px 10px;
+}
+.card-title{
+  font-size:10px;font-weight:700;color:var(--muted);
+  letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;
+}
 
 /* PILL TABS */
-.pill-tabs{display:flex;gap:6px;padding:0 16px 12px;overflow-x:auto}
-.pill-tab{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;background:var(--card);color:var(--muted);white-space:nowrap;transition:background .15s,color .15s}
-.pill-tab.active{background:var(--accent);color:#000}
+.pill-tabs{
+  display:flex;gap:6px;padding:0 16px 14px;
+  overflow-x:auto;scrollbar-width:none;
+}
+.pill-tabs::-webkit-scrollbar{display:none}
+.pill-tab{
+  padding:6px 15px;border-radius:20px;font-size:13px;font-weight:500;
+  background:var(--surface2);color:var(--muted);white-space:nowrap;
+  border:1px solid transparent;transition:all .15s;
+}
+.pill-tab.active{background:var(--accent);color:#000;font-weight:600}
 
-/* BTNS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;transition:opacity .15s}
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:6px;padding:13px 20px;border-radius:10px;
+  font-size:14px;font-weight:600;transition:opacity .15s;
+}
 .btn:active{opacity:.8}
 .btn-primary{background:var(--accent);color:#000;width:100%}
-.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);width:100%}
-.btn-danger{background:#ef444422;color:var(--danger);border:1px solid #ef444433}
-.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;width:auto}
-.btn-icon{background:none;color:var(--muted);padding:4px;font-size:18px}
+.btn-secondary{
+  background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);width:100%;
+}
+.btn-sm{padding:7px 12px;font-size:12px;border-radius:8px;width:auto}
+.btn-icon{background:none;color:var(--muted);padding:4px;font-size:17px;border:none}
 
-/* PRACTICE */
+/* SONG SELECT */
 .song-select-wrap{position:relative}
-.song-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--card2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:200px;overflow-y:auto;display:none}
+.song-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;
+  display:none;box-shadow:0 8px 30px rgba(0,0,0,.3);
+}
 .song-dropdown.open{display:block}
-.song-option{padding:10px 12px;cursor:pointer;font-size:14px}
-.song-option:hover{background:var(--border)}
+.song-option{
+  padding:11px 14px;cursor:pointer;font-size:14px;
+  border-bottom:1px solid var(--border);
+}
+.song-option:last-child{border-bottom:none}
+.song-option:hover{background:var(--surface2)}
 
-.timer-display{text-align:center;padding:30px 20px}
-.timer-time{font-size:64px;font-weight:100;letter-spacing:4px;font-variant-numeric:tabular-nums}
-.timer-song{font-size:14px;color:var(--muted);margin-top:4px}
-.timer-btns{display:flex;gap:10px;padding:0 16px 16px}
+/* TIMER */
+.timer-display{text-align:center;padding:36px 20px 24px}
+.timer-time{
+  font-family:Georgia,'Palatino Linotype',serif;font-style:italic;
+  font-size:72px;font-weight:normal;letter-spacing:2px;
+  font-variant-numeric:tabular-nums;color:var(--accent);
+  line-height:1;
+}
+.timer-song{font-size:13px;color:var(--muted);margin-top:10px}
+.timer-btns{display:flex;gap:8px;padding:0 16px 16px}
 
-.goal-banner{background:linear-gradient(135deg,#1a1500,#2a1f00);border:1px solid #f59e0b33;border-radius:12px;padding:14px;margin:0 16px 12px}
-.goal-banner-label{font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px}
-.goal-banner-text{font-size:14px;line-height:1.5}
+/* GOAL BANNER */
+.goal-banner{
+  background:linear-gradient(135deg,rgba(232,160,32,.08),rgba(232,160,32,.04));
+  border:1px solid rgba(232,160,32,.2);border-radius:12px;
+  padding:14px;margin:0 16px 10px;
+}
+.goal-banner-label{
+  font-size:10px;color:var(--accent);font-weight:700;
+  letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;
+}
+.goal-banner-text{font-size:14px;line-height:1.6;color:var(--text)}
 
-.log-form-overlay{position:fixed;inset:0;background:#000a;z-index:200;display:flex;align-items:flex-end}
-.log-form-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto}
-.log-form-sheet h3{font-size:16px;font-weight:700;margin-bottom:16px}
+/* LOG MODAL */
+.log-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:200;display:flex;align-items:flex-end;
+  backdrop-filter:blur(4px);
+}
+.log-sheet{
+  background:var(--surface);border-radius:20px 20px 0 0;
+  padding:24px;width:100%;max-height:80vh;overflow-y:auto;
+}
+.log-sheet h3{font-size:16px;font-weight:700;margin-bottom:18px}
 .form-row{margin-bottom:14px}
 
-/* GOALS */
-.song-item{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card);border-radius:10px;margin:0 16px 8px;border:1px solid var(--border)}
+/* SONG ITEMS */
+.song-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;background:var(--surface);
+  border-radius:10px;margin:0 16px 8px;
+  border:1px solid var(--border);
+}
 .song-item-info{flex:1;min-width:0}
-.song-item-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.song-item-sub{font-size:12px;color:var(--muted)}
-.song-status-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
-.badge-wishlist{background:#1a1a2e;color:#60a5fa}
-.badge-practicing{background:#1a200a;color:#4ade80}
-.badge-done{background:#1a1a1a;color:#888}
+.song-item-title{
+  font-size:14px;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.song-item-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.badge{
+  font-size:10px;padding:3px 8px;border-radius:10px;
+  font-weight:600;white-space:nowrap;
+}
+.badge-wishlist{background:rgba(96,165,250,.12);color:var(--blue)}
+.badge-practicing{background:rgba(74,222,128,.12);color:var(--success)}
+.badge-done{background:var(--surface2);color:var(--muted)}
 
-.goal-item{background:var(--card);border-radius:10px;padding:12px;margin:0 16px 8px;border:1px solid var(--border)}
-.goal-item-song{font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px}
-.goal-item-text{font-size:14px;line-height:1.5}
+/* GOAL ITEMS */
+.goal-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;margin:0 16px 8px;
+}
+.goal-item-song{font-size:11px;color:var(--accent);font-weight:600;margin-bottom:5px}
+.goal-item-text{font-size:14px;line-height:1.6}
+.goal-item-del{
+  background:none;border:none;color:var(--muted);
+  font-size:11px;cursor:pointer;margin-top:6px;display:block;
+}
 
-.vision-item{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card);border-radius:10px;margin:0 16px 8px;border:1px solid var(--border)}
-.vision-item.done{opacity:.5}
-.vision-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:12px}
-.vision-check.done{background:var(--green);border-color:var(--green)}
-.vision-cat{font-size:10px;color:var(--muted)}
+/* VISION */
+.vision-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;background:var(--surface);
+  border-radius:10px;margin:0 16px 8px;border:1px solid var(--border);
+  transition:opacity .2s;
+}
+.vision-item.done{opacity:.45}
+.vision-check{
+  width:24px;height:24px;border-radius:50%;
+  border:2px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:12px;font-weight:700;
+  transition:all .15s;
+}
+.vision-check.done{background:var(--success);border-color:var(--success);color:#000}
+.vision-title{font-size:14px;font-weight:600}
+.vision-cat{font-size:11px;color:var(--muted);margin-top:2px}
 
 /* TUNER */
-#view-tuner{display:none;align-items:center;flex-direction:column;padding:20px;min-height:calc(100vh - var(--nav-h))}
-#view-tuner.active{display:flex}
-.tuner-note{font-size:96px;font-weight:800;letter-spacing:-4px;transition:color .1s}
-.tuner-freq{font-size:14px;color:var(--muted);margin-top:-8px}
-.tuner-cents{font-size:16px;font-weight:600;margin-top:4px}
-.tuner-meter{width:100%;max-width:320px;height:12px;background:var(--card2);border-radius:6px;overflow:hidden;margin:16px 0;position:relative}
-.tuner-meter-fill{position:absolute;top:0;height:100%;width:4px;border-radius:2px;background:var(--accent);transition:left .08s,background .08s;transform:translateX(-50%)}
-.tuner-meter-center{position:absolute;top:-2px;bottom:-2px;left:50%;width:2px;background:#444;transform:translateX(-50%)}
-.string-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:320px;margin-top:8px}
-.string-btn{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px}
-.string-btn span{font-size:10px;color:var(--muted)}
+#view-tuner{display:none}
+#view-tuner.active{
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 20px 20px;
+}
+.tuner-note{
+  font-family:Georgia,'Palatino Linotype',serif;font-style:italic;
+  font-size:100px;font-weight:normal;line-height:1;
+  color:var(--muted);transition:color .08s;
+  margin:10px 0 0;
+}
+.tuner-freq{font-size:13px;color:var(--muted);margin-top:-4px}
+.tuner-cents{font-size:15px;font-weight:600;margin:6px 0}
+.tuner-gauge{
+  width:100%;max-width:300px;height:10px;
+  background:var(--surface2);border-radius:5px;
+  position:relative;overflow:hidden;margin:10px 0 4px;
+}
+.tuner-gauge-track{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--danger) 0%,var(--accent) 45%,var(--success) 50%,var(--accent) 55%,var(--danger) 100%);
+  opacity:.3;
+}
+.tuner-needle{
+  position:absolute;top:-2px;bottom:-2px;width:4px;
+  border-radius:2px;background:var(--accent);
+  transform:translateX(-50%);left:50%;transition:left .08s,background .08s;
+}
+.tuner-center-mark{
+  position:absolute;top:-3px;bottom:-3px;left:50%;width:2px;
+  background:var(--border);transform:translateX(-50%);
+}
+.tuner-verdict{
+  font-size:12px;color:var(--muted);min-height:18px;margin-bottom:14px;
+}
+.string-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  width:100%;max-width:300px;
+}
+.string-btn{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:12px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;transition:border-color .15s,color .15s;color:var(--text);
+}
+.string-btn .sn{font-size:20px;font-weight:700;font-family:Georgia,serif;font-style:italic}
+.string-btn .sl{font-size:10px;color:var(--muted)}
 .string-btn.playing{border-color:var(--accent);color:var(--accent)}
-.tuner-start-btn{margin-top:20px;padding:14px 32px;border-radius:30px;font-size:15px;font-weight:700;background:var(--accent);color:#000}
-.tuner-start-btn.active{background:#ef4444;color:#fff}
-.tuner-status{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px}
+.tuner-toggle{
+  margin-top:18px;padding:14px 36px;border-radius:30px;
+  font-size:15px;font-weight:700;background:var(--accent);color:#000;
+  transition:background .2s;
+}
+.tuner-toggle.on{background:var(--danger);color:#fff}
+.tuner-status{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px;text-align:center}
 
 /* SHEETS */
 .sheets-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px}
-.sheet-card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid var(--border)}
-.sheet-thumb{height:100px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:36px}
-.sheet-info{padding:10px}
-.sheet-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sheet-song{font-size:11px;color:var(--muted)}
+.sheet-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;cursor:pointer;
+  transition:border-color .15s;
+}
+.sheet-card:hover{border-color:var(--accent)}
+.sheet-thumb{
+  height:90px;background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+}
+.sheet-meta{padding:10px}
+.sheet-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-song{font-size:11px;color:var(--muted);margin-top:2px}
 
-.preview-overlay{position:fixed;inset:0;background:#000d;z-index:300;display:flex;flex-direction:column}
-.preview-header{display:flex;align-items:center;padding:12px 16px;background:var(--card);gap:10px}
-.preview-header span{flex:1;font-size:14px;font-weight:600}
-.preview-close{background:none;color:var(--text);font-size:20px;padding:4px}
-.preview-body{flex:1;overflow:hidden}
-.preview-body iframe,.preview-body img{width:100%;height:100%;border:none;object-fit:contain}
+/* PREVIEW */
+.preview-ov{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);
+  z-index:300;display:flex;flex-direction:column;
+}
+.preview-hd{
+  display:flex;align-items:center;padding:14px 16px;
+  background:var(--surface);gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.preview-hd span{flex:1;font-size:14px;font-weight:600}
+.preview-body{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.preview-body iframe,.preview-body img{
+  width:100%;height:100%;border:none;object-fit:contain;
+}
 
-/* ADD MODAL */
-.modal-overlay{position:fixed;inset:0;background:#000a;z-index:200;display:flex;align-items:flex-end}
-.modal-sheet{background:#1a1a1a;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto}
-.modal-sheet h3{font-size:16px;font-weight:700;margin-bottom:16px}
+/* MODALS */
+.modal-ov{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:200;display:flex;align-items:flex-end;
+  backdrop-filter:blur(4px);
+}
+.modal-sheet{
+  background:var(--surface);border-radius:20px 20px 0 0;
+  padding:24px;width:100%;max-height:85vh;overflow-y:auto;
+}
+.modal-sheet h3{font-size:16px;font-weight:700;margin-bottom:18px}
 
-/* PRACTICE LOG LIST */
+/* LOG ITEMS */
 .log-item{padding:10px 0;border-bottom:1px solid var(--border)}
 .log-item:last-child{border-bottom:none}
-.log-date{font-size:11px;color:var(--accent);margin-bottom:4px}
-.log-duration{font-size:11px;color:var(--muted);float:right}
-.log-text{font-size:13px;line-height:1.5}
-
-.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+.log-date{font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.log-dur{font-size:11px;color:var(--muted);float:right}
+.log-txt{font-size:13px;line-height:1.6;margin-top:2px}
 
 /* FAB */
-.fab{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 16px);right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#000;font-size:24px;display:flex;align-items:center;justify-content:center;z-index:99;box-shadow:0 4px 20px #f59e0b44}
+.fab{
+  position:fixed;bottom:calc(var(--nav-h) + 14px);right:16px;
+  width:50px;height:50px;border-radius:50%;background:var(--accent);
+  color:#000;font-size:22px;font-weight:400;
+  display:flex;align-items:center;justify-content:center;
+  z-index:99;box-shadow:0 4px 24px rgba(232,160,32,.3);
+}
+.fab.hidden{display:none}
 
-/* TOGGLE */
-.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
-.toggle-label{font-size:14px}
-.toggle{width:44px;height:24px;border-radius:12px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
-.toggle.on{background:var(--accent)}
-.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s}
-.toggle.on::after{left:23px}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;line-height:1.6}
+.divider{height:1px;background:var(--border);margin:4px 16px 12px}
 
-@media(prefers-color-scheme:light){
-  :root{--bg:#f5f5f5;--card:#fff;--card2:#f0f0f0;--text:#111;--border:#e0e0e0;--muted:#666}
-  #bottom-nav{background:#fff}
-  .home-card{background:#fff}
+/* Practice sheet preview strip */
+.sheets-strip{display:flex;gap:8px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none}
+.sheets-strip::-webkit-scrollbar{display:none}
+.sheet-thumb-sm{
+  flex-shrink:0;width:72px;cursor:pointer;
+}
+.sheet-thumb-sm .th{
+  height:56px;background:var(--surface2);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  border:1px solid var(--border);
+}
+.sheet-thumb-sm .tn{
+  font-size:9px;color:var(--muted);margin-top:3px;
+  text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 </style>
-</head>
-<body>
 
 <div id="main">
 
 <!-- HOME -->
 <div class="view active" id="view-home">
-  <div style="padding:60px 20px 20px;text-align:center">
-    <div style="font-size:40px;margin-bottom:12px">🎸</div>
-    <div class="home-title">I'm a <span>Singer</span><br>Songwriter</div>
+  <div class="home-hero">
+    <div class="home-strings" id="home-strings"></div>
+    <div class="home-title-eyebrow">Practice Journal</div>
+    <div class="home-title">I'm a<br><em>Singer Songwriter</em></div>
     <div class="home-sub">당신의 음악 여정을 기록하세요</div>
-    <div class="home-grid">
-      <div class="home-card amber" onclick="nav('practice')">
-        <div class="hc-icon">🎸</div>
-        <div class="hc-label">연습하기</div>
-      </div>
-      <div class="home-card blue" onclick="nav('goals')">
-        <div class="hc-icon">🎯</div>
-        <div class="hc-label">목표 세우기</div>
-      </div>
-      <div class="home-card purple" onclick="nav('tuner')">
-        <div class="hc-icon">🎵</div>
-        <div class="hc-label">튜닝하기</div>
-      </div>
-      <div class="home-card green" onclick="nav('sheets')">
-        <div class="hc-icon">📄</div>
-        <div class="hc-label">악보보기</div>
-      </div>
+  </div>
+  <div class="home-grid">
+    <div class="home-card c-amber" onclick="nav('practice')">
+      <div class="hc-icon">🎸</div>
+      <div class="hc-label">연습하기</div>
+      <div class="hc-desc">타이머로 기록하고<br>성장을 쌓아가세요</div>
+    </div>
+    <div class="home-card c-blue" onclick="nav('goals')">
+      <div class="hc-icon">🎯</div>
+      <div class="hc-label">목표 세우기</div>
+      <div class="hc-desc">곡 목표와 비저너리<br>리스트를 관리해요</div>
+    </div>
+    <div class="home-card c-purple" onclick="nav('tuner')">
+      <div class="hc-icon">🎵</div>
+      <div class="hc-label">튜닝하기</div>
+      <div class="hc-desc">마이크로 음정을<br>실시간 감지해요</div>
+    </div>
+    <div class="home-card c-green" onclick="nav('sheets')">
+      <div class="hc-icon">📄</div>
+      <div class="hc-label">악보보기</div>
+      <div class="hc-desc">모은 악보를 한눈에<br>미리보기해요</div>
     </div>
   </div>
 </div>
 
 <!-- PRACTICE -->
 <div class="view" id="view-practice">
-  <div class="sec-header">
+  <div class="sec-hd">
     <button class="back-btn" onclick="nav('home')">←</button>
     <h2>🎸 연습하기</h2>
   </div>
 
-  <!-- song select -->
   <div id="practice-select-phase">
     <div style="padding:0 16px 12px">
       <label>어떤 곡을 연습하시나요?</label>
       <div class="song-select-wrap">
-        <input type="text" id="practice-song-input" placeholder="곡 제목 검색 또는 직접 입력..." autocomplete="off"
-          oninput="filterSongDropdown(this.value)" onfocus="openSongDropdown()">
-        <div class="song-dropdown" id="song-dropdown"></div>
+        <input type="text" id="practice-song-input" placeholder="곡 제목 검색 또는 직접 입력…"
+          autocomplete="off" oninput="filterDD(this.value)" onfocus="openDD()">
+        <div class="song-dropdown" id="song-dd"></div>
       </div>
     </div>
     <div id="selected-song-info" style="display:none">
       <div id="goal-banner-wrap"></div>
       <div id="practice-sheets-wrap"></div>
     </div>
-    <div style="padding:0 16px;margin-top:8px">
+    <div style="padding:0 16px;margin-top:4px">
       <button class="btn btn-primary" onclick="startPractice()">▶ 연습 시작</button>
     </div>
   </div>
 
-  <!-- timer phase -->
   <div id="practice-timer-phase" style="display:none">
     <div class="timer-display">
       <div class="timer-time" id="timer-display">00:00</div>
-      <div class="timer-song" id="timer-song-label">-</div>
+      <div class="timer-song" id="timer-song-label">—</div>
     </div>
     <div class="timer-btns">
       <button class="btn btn-secondary btn-sm" style="flex:1" id="pause-btn" onclick="togglePause()">⏸ 일시정지</button>
-      <button class="btn btn-primary" style="flex:2" onclick="stopPractice()">⏹ 연습 종료 및 저장</button>
+      <button class="btn btn-primary" style="flex:2" onclick="stopPractice()">⏹ 종료 및 저장</button>
     </div>
-    <div class="card" style="margin-top:8px">
+    <div class="card">
       <div class="card-title">이전 연습 기록</div>
-      <div id="practice-log-list"><div class="empty">아직 기록이 없어요</div></div>
+      <div id="log-list-display"><div class="empty" style="padding:16px 0">아직 기록이 없어요</div></div>
     </div>
   </div>
 </div>
 
 <!-- GOALS -->
 <div class="view" id="view-goals">
-  <div class="sec-header">
+  <div class="sec-hd">
     <button class="back-btn" onclick="nav('home')">←</button>
     <h2>🎯 목표 세우기</h2>
   </div>
   <div class="pill-tabs">
-    <button class="pill-tab active" onclick="switchGoalTab('songs',this)">곡 관리</button>
-    <button class="pill-tab" onclick="switchGoalTab('goals',this)">목표 작성</button>
-    <button class="pill-tab" onclick="switchGoalTab('vision',this)">비저너리</button>
+    <button class="pill-tab active" onclick="switchGTab('songs',this)">곡 관리</button>
+    <button class="pill-tab" onclick="switchGTab('goals',this)">목표 작성</button>
+    <button class="pill-tab" onclick="switchGTab('vision',this)">비저너리</button>
   </div>
 
-  <!-- songs tab -->
   <div id="gtab-songs">
-    <div id="songs-list"><div class="empty">곡이 없어요. + 버튼으로 추가하세요</div></div>
+    <div id="songs-list"><div class="empty">+ 버튼으로 곡을 추가하세요</div></div>
   </div>
-
-  <!-- goals tab -->
   <div id="gtab-goals" style="display:none">
     <div style="padding:0 16px 12px">
       <label>곡 선택</label>
-      <select id="goal-song-select" onchange="loadGoalsForSong(this.value)">
-        <option value="">-- 곡 선택 --</option>
+      <select id="goal-song-sel" onchange="loadGoalsForSong(this.value)">
+        <option value="">— 곡 선택 —</option>
       </select>
     </div>
     <div id="goals-list"><div class="empty">곡을 선택하세요</div></div>
     <div id="goal-add-form" style="display:none;padding:0 16px;margin-top:4px">
-      <textarea id="new-goal-text" placeholder="이 곡에 대한 목표를 작성하세요..." rows="3"></textarea>
-      <button class="btn btn-primary" style="margin-top:8px" onclick="addGoal()">목표 추가</button>
+      <textarea id="new-goal-text" placeholder="이 곡에 대한 목표를 작성하세요…" rows="3"></textarea>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="addGoal()">목표 추가</button>
     </div>
   </div>
-
-  <!-- vision tab -->
   <div id="gtab-vision" style="display:none">
-    <div id="vision-list"><div class="empty">버킷리스트를 추가해보세요</div></div>
+    <div id="vision-list"><div class="empty">악기, 경험… 꿈꾸는 것들을 기록하세요</div></div>
   </div>
 </div>
 
 <!-- TUNER -->
 <div class="view" id="view-tuner">
-  <div style="width:100%;display:flex;align-items:center;padding:20px 20px 0;gap:10px">
+  <div style="width:100%;display:flex;align-items:center;padding:18px 16px 0;gap:10px">
     <button class="back-btn" onclick="nav('home')">←</button>
-    <h2 style="font-size:18px;font-weight:700">🎵 튜닝하기</h2>
+    <h2 style="font-size:17px;font-weight:700">🎵 튜닝하기</h2>
   </div>
-  <div class="tuner-note" id="tuner-note" style="color:var(--muted)">--</div>
-  <div class="tuner-freq" id="tuner-freq">-- Hz</div>
+  <div class="tuner-note" id="tuner-note">—</div>
+  <div class="tuner-freq" id="tuner-freq">— Hz</div>
   <div class="tuner-cents" id="tuner-cents" style="color:var(--muted)">0 cents</div>
-  <div class="tuner-meter">
-    <div class="tuner-meter-center"></div>
-    <div class="tuner-meter-fill" id="tuner-needle" style="left:50%"></div>
+  <div class="tuner-gauge">
+    <div class="tuner-gauge-track"></div>
+    <div class="tuner-center-mark"></div>
+    <div class="tuner-needle" id="tuner-needle"></div>
   </div>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="tuner-intonation">-</div>
-
-  <div style="font-size:12px;color:var(--muted);margin-bottom:8px">기준음 듣기</div>
-  <div class="string-btns">
-    <button class="string-btn" onclick="playRef(82.41,'E2',this)"><b>E</b><span>6번줄 E2</span></button>
-    <button class="string-btn" onclick="playRef(110,'A2',this)"><b>A</b><span>5번줄 A2</span></button>
-    <button class="string-btn" onclick="playRef(146.83,'D3',this)"><b>D</b><span>4번줄 D3</span></button>
-    <button class="string-btn" onclick="playRef(196,'G3',this)"><b>G</b><span>3번줄 G3</span></button>
-    <button class="string-btn" onclick="playRef(246.94,'B3',this)"><b>B</b><span>2번줄 B3</span></button>
-    <button class="string-btn" onclick="playRef(329.63,'E4',this)"><b>E</b><span>1번줄 E4</span></button>
+  <div class="tuner-verdict" id="tuner-verdict">—</div>
+  <div style="font-size:11px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px">기준음 듣기</div>
+  <div class="string-grid">
+    <button class="string-btn" onclick="playRef(82.41,'E2',this)"><span class="sn">E</span><span class="sl">6번줄 · E2</span></button>
+    <button class="string-btn" onclick="playRef(110,'A2',this)"><span class="sn">A</span><span class="sl">5번줄 · A2</span></button>
+    <button class="string-btn" onclick="playRef(146.83,'D3',this)"><span class="sn">D</span><span class="sl">4번줄 · D3</span></button>
+    <button class="string-btn" onclick="playRef(196,'G3',this)"><span class="sn">G</span><span class="sl">3번줄 · G3</span></button>
+    <button class="string-btn" onclick="playRef(246.94,'B3',this)"><span class="sn">B</span><span class="sl">2번줄 · B3</span></button>
+    <button class="string-btn" onclick="playRef(329.63,'E4',this)"><span class="sn">E</span><span class="sl">1번줄 · E4</span></button>
   </div>
-  <button class="tuner-start-btn" id="tuner-btn" onclick="toggleTuner()">🎤 튜너 시작</button>
+  <button class="tuner-toggle" id="tuner-toggle-btn" onclick="toggleTuner()">🎤 튜너 시작</button>
   <div class="tuner-status" id="tuner-status"></div>
 </div>
 
 <!-- SHEETS -->
 <div class="view" id="view-sheets">
-  <div class="sec-header">
+  <div class="sec-hd">
     <button class="back-btn" onclick="nav('home')">←</button>
     <h2>📄 악보보기</h2>
   </div>
-  <div id="sheets-grid" class="sheets-grid"><div class="empty" style="grid-column:1/-1">악보가 없어요. + 버튼으로 추가하세요</div></div>
+  <div class="sheets-grid" id="sheets-grid">
+    <div class="empty" style="grid-column:1/-1">+ 버튼으로 악보를 업로드하세요</div>
+  </div>
 </div>
 
 </div><!-- /main -->
 
-<!-- Bottom Nav -->
+<!-- BOTTOM NAV -->
 <nav id="bottom-nav">
-  <button class="nav-btn active" id="nav-home" onclick="nav('home')">
-    <div class="icon">🏠</div><span>홈</span>
-  </button>
-  <button class="nav-btn" id="nav-practice" onclick="nav('practice')">
-    <div class="icon">🎸</div><span>연습</span>
-  </button>
-  <button class="nav-btn" id="nav-goals" onclick="nav('goals')">
-    <div class="icon">🎯</div><span>목표</span>
-  </button>
-  <button class="nav-btn" id="nav-tuner" onclick="nav('tuner')">
-    <div class="icon">🎵</div><span>튜닝</span>
-  </button>
-  <button class="nav-btn" id="nav-sheets" onclick="nav('sheets')">
-    <div class="icon">📄</div><span>악보</span>
-  </button>
+  <button class="nav-btn active" id="nav-home" onclick="nav('home')"><div class="icon">🏠</div>홈</button>
+  <button class="nav-btn" id="nav-practice" onclick="nav('practice')"><div class="icon">🎸</div>연습</button>
+  <button class="nav-btn" id="nav-goals" onclick="nav('goals')"><div class="icon">🎯</div>목표</button>
+  <button class="nav-btn" id="nav-tuner" onclick="nav('tuner')"><div class="icon">🎵</div>튜닝</button>
+  <button class="nav-btn" id="nav-sheets" onclick="nav('sheets')"><div class="icon">📄</div>악보</button>
 </nav>
 
-<!-- FAB (context-sensitive) -->
-<button class="fab" id="fab" onclick="fabAction()" style="display:none">＋</button>
+<!-- FAB -->
+<button class="fab hidden" id="fab" onclick="fabAction()">＋</button>
 
 <!-- ADD SONG MODAL -->
-<div class="modal-overlay" id="add-song-modal" style="display:none" onclick="if(event.target===this)closeSongModal()">
+<div class="modal-ov" id="song-modal" style="display:none" onclick="if(event.target===this)closeSongModal()">
   <div class="modal-sheet">
     <h3>곡 추가</h3>
-    <div class="form-row"><label>제목 *</label><input type="text" id="song-title-in" placeholder="곡 제목"></div>
-    <div class="form-row"><label>아티스트</label><input type="text" id="song-artist-in" placeholder="아티스트명"></div>
-    <div class="form-row"><label>코드 링크</label><input type="url" id="song-chord-in" placeholder="https://..."></div>
-    <div class="form-row">
-      <label>상태</label>
-      <select id="song-status-in">
+    <div class="form-row"><label>제목 *</label><input type="text" id="sng-title" placeholder="곡 제목"></div>
+    <div class="form-row"><label>아티스트</label><input type="text" id="sng-artist" placeholder="아티스트명"></div>
+    <div class="form-row"><label>코드 링크</label><input type="url" id="sng-chord" placeholder="https://…"></div>
+    <div class="form-row"><label>상태</label>
+      <select id="sng-status">
         <option value="wishlist">연습 예정</option>
         <option value="practicing">연습 중</option>
         <option value="done">완료</option>
       </select>
     </div>
-    <div style="display:flex;gap:8px;margin-top:4px">
+    <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-secondary" style="flex:1" onclick="closeSongModal()">취소</button>
       <button class="btn btn-primary" style="flex:2" onclick="saveSong()">저장</button>
     </div>
@@ -386,38 +622,35 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 </div>
 
 <!-- ADD VISION MODAL -->
-<div class="modal-overlay" id="add-vision-modal" style="display:none" onclick="if(event.target===this)closeVisionModal()">
+<div class="modal-ov" id="vision-modal" style="display:none" onclick="if(event.target===this)closeVisionModal()">
   <div class="modal-sheet">
     <h3>버킷리스트 추가</h3>
-    <div class="form-row">
-      <label>카테고리</label>
-      <select id="vision-cat-in">
-        <option value="instrument">🎸 악기/장비</option>
+    <div class="form-row"><label>카테고리</label>
+      <select id="vis-cat">
+        <option value="instrument">🎸 악기 / 장비</option>
         <option value="experience">✨ 경험</option>
       </select>
     </div>
-    <div class="form-row"><label>내용 *</label><input type="text" id="vision-title-in" placeholder="예: 어쿠스틱 기타 구매, 버스킹 도전"></div>
-    <div class="form-row"><label>메모</label><textarea id="vision-notes-in" placeholder="추가 메모..." rows="2"></textarea></div>
-    <div style="display:flex;gap:8px;margin-top:4px">
+    <div class="form-row"><label>내용 *</label><input type="text" id="vis-title" placeholder="예: 어쿠스틱 기타 구매, 버스킹 도전"></div>
+    <div class="form-row"><label>메모</label><textarea id="vis-notes" placeholder="추가 메모…" rows="2"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-secondary" style="flex:1" onclick="closeVisionModal()">취소</button>
-      <button class="btn btn-primary" style="flex:2" onclick="saveVision()">저장</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveVision()">추가</button>
     </div>
   </div>
 </div>
 
 <!-- UPLOAD SHEET MODAL -->
-<div class="modal-overlay" id="upload-sheet-modal" style="display:none" onclick="if(event.target===this)closeUploadModal()">
+<div class="modal-ov" id="upload-modal" style="display:none" onclick="if(event.target===this)closeUploadModal()">
   <div class="modal-sheet">
     <h3>악보 업로드</h3>
-    <div class="form-row">
-      <label>곡 선택</label>
-      <select id="sheet-song-select"><option value="">-- 곡 선택 (선택사항) --</option></select>
+    <div class="form-row"><label>곡 선택 (선택사항)</label>
+      <select id="sheet-song-sel"><option value="">— 미분류 —</option></select>
     </div>
-    <div class="form-row">
-      <label>파일 선택 (PDF, 이미지)</label>
-      <input type="file" id="sheet-file-input" accept=".pdf,image/*" style="background:var(--card2);padding:10px">
+    <div class="form-row"><label>파일 (PDF, 이미지)</label>
+      <input type="file" id="sheet-file" accept=".pdf,image/*" style="background:var(--surface2);padding:10px">
     </div>
-    <div style="display:flex;gap:8px;margin-top:4px">
+    <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-secondary" style="flex:1" onclick="closeUploadModal()">취소</button>
       <button class="btn btn-primary" style="flex:2" onclick="uploadSheet()">업로드</button>
     </div>
@@ -425,16 +658,16 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 </div>
 
 <!-- LOG SAVE MODAL -->
-<div class="log-form-overlay" id="log-modal" style="display:none">
-  <div class="log-form-sheet">
+<div class="log-overlay" id="log-modal" style="display:none">
+  <div class="log-sheet">
     <h3>연습 기록 저장</h3>
     <div class="form-row">
       <label>오늘 연습한 내용</label>
-      <textarea id="log-practiced" placeholder="어떤 부분을 연습했나요? 코드, 리듬, 노래 등..." rows="3"></textarea>
+      <textarea id="log-practiced" placeholder="코드, 리듬, 가사… 어떤 부분을 연습했나요?" rows="3"></textarea>
     </div>
     <div class="form-row">
       <label>배운 것 / 느낀 것</label>
-      <textarea id="log-learned" placeholder="오늘 새로 깨달은 것이나 개선된 점..." rows="3"></textarea>
+      <textarea id="log-learned" placeholder="새로 깨달은 것, 개선된 점, 기억할 것…" rows="3"></textarea>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary" style="flex:1" onclick="discardLog()">버리기</button>
@@ -444,229 +677,213 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 </div>
 
 <!-- PREVIEW OVERLAY -->
-<div class="preview-overlay" id="preview-overlay" style="display:none">
-  <div class="preview-header">
-    <button class="preview-close" onclick="closePreview()">✕</button>
+<div class="preview-ov" id="preview-ov" style="display:none">
+  <div class="preview-hd">
+    <button style="background:none;color:var(--text);font-size:18px;border:none;cursor:pointer;padding:4px" onclick="closePreview()">✕</button>
     <span id="preview-title">악보 미리보기</span>
-    <a id="preview-dl" href="#" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none">열기↗</a>
+    <a id="preview-dl" href="#" target="_blank" style="font-size:12px;text-decoration:none">열기↗</a>
   </div>
   <div class="preview-body" id="preview-body"></div>
 </div>
 
 <script>
-// ===== CONFIG =====
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
 const SB_URL = 'https://dvlrzbckneucpvlacdll.supabase.co'
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2bHJ6YmNrbmV1Y3B2bGFjZGxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODE0OTUsImV4cCI6MjA5MDU1NzQ5NX0.ofzGfyjndiT-FAIcG9TCFtUSXsagTBYOnhsP91vx0sE'
 const BUCKET = 'ssw-sheets'
+const SB_HDR = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }
 
-// ===== SUPABASE API =====
+// ─── SUPABASE ────────────────────────────────────────────────────────────────
 const sb = {
-  h: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
-  async get(table, qs='') {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}&order=created_at.desc`, { headers: this.h })
-    return r.ok ? r.json() : []
+  async get(table, qs = '') {
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}&order=created_at.desc`, { headers: SB_HDR })
+      return r.ok ? r.json() : []
+    } catch { return [] }
   },
   async post(table, data) {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
-      method: 'POST',
-      headers: { ...this.h, 'Prefer': 'return=representation' },
-      body: JSON.stringify(data)
-    })
-    return r.ok ? r.json() : null
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+        method: 'POST', body: JSON.stringify(data),
+        headers: { ...SB_HDR, 'Prefer': 'return=representation' }
+      })
+      return r.ok ? r.json() : null
+    } catch { return null }
   },
   async patch(table, id, data) {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {
-      method: 'PATCH',
-      headers: { ...this.h, 'Prefer': 'return=representation' },
-      body: JSON.stringify(data)
-    })
-    return r.ok ? r.json() : null
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: 'PATCH', body: JSON.stringify(data),
+        headers: { ...SB_HDR, 'Prefer': 'return=representation' }
+      })
+      return r.ok ? r.json() : null
+    } catch { return null }
   },
   async del(table, id) {
-    await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method: 'DELETE', headers: this.h })
+    try { await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method: 'DELETE', headers: SB_HDR }) } catch {}
   },
   async upload(path, file) {
-    const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${path}`, {
-      method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': file.type || 'application/octet-stream' },
-      body: file
-    })
-    return r.ok
+    try {
+      const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${path}`, {
+        method: 'POST', body: file,
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': file.type || 'application/octet-stream' }
+      })
+      return r.ok
+    } catch { return false }
   },
-  fileUrl(path) {
-    return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`
-  }
+  fileUrl(path) { return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}` }
 }
 
-// ===== STATE =====
-let state = {
-  currentView: 'home',
-  songs: [],
-  goals: [],
-  sheets: [],
-  wishlist: [],
-  practiceSelectedSong: null,
-  timer: null,
-  timerSeconds: 0,
-  timerPaused: false,
-  practiceStartTime: null
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let S = {
+  view: 'home', songs: [], sheets: [], wishlist: [],
+  selSong: null, timer: null, secs: 0, paused: false
 }
 
-// ===== ROUTER =====
-function nav(view) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
-  document.getElementById('view-'+view).classList.add('active')
-  const nb = document.getElementById('nav-'+view)
+// ─── ROUTER ──────────────────────────────────────────────────────────────────
+function nav(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'))
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'))
+  document.getElementById('view-' + v).classList.add('active')
+  const nb = document.getElementById('nav-' + v)
   if (nb) nb.classList.add('active')
+  S.view = v
   const fab = document.getElementById('fab')
-  state.currentView = view
-  fab.style.display = ['goals','sheets'].includes(view) ? 'flex' : 'none'
-  if (view === 'practice') loadSongsForPractice()
-  if (view === 'goals') loadGoalsView()
-  if (view === 'sheets') loadSheets()
+  fab.classList.toggle('hidden', !['goals','sheets'].includes(v))
+  if (v === 'practice') loadPracticeSongs()
+  if (v === 'goals') loadGoalsView()
+  if (v === 'sheets') loadSheets()
   document.getElementById('main').scrollTop = 0
 }
 
 function fabAction() {
-  if (state.currentView === 'goals') {
-    const active = document.querySelector('.pill-tab.active')
-    const tab = active ? active.textContent.trim() : ''
-    if (tab === '비저너리') showVisionModal()
+  if (S.view === 'goals') {
+    const active = document.querySelector('#view-goals .pill-tab.active')
+    if (active && active.textContent.includes('비저너리')) showVisionModal()
     else showSongModal()
-  } else if (state.currentView === 'sheets') {
+  } else if (S.view === 'sheets') {
     showUploadModal()
   }
 }
 
-// ===== PRACTICE VIEW =====
-async function loadSongsForPractice() {
-  state.songs = await sb.get('ssw_songs', 'status=neq.done')
-  renderSongDropdown(state.songs)
+// ─── HOME STRINGS ─────────────────────────────────────────────────────────────
+function renderHomeStrings() {
+  const c = document.getElementById('home-strings')
+  if (!c) return
+  const positions = [15,30,45,58,70,84]
+  c.innerHTML = positions.map(p => `<span style="top:${p}%"></span>`).join('')
 }
 
-function renderSongDropdown(songs) {
-  const dd = document.getElementById('song-dropdown')
-  dd.innerHTML = songs.length ? songs.map(s =>
-    `<div class="song-option" onclick="selectPracticeSong('${s.id}','${esc(s.title)}','${esc(s.artist||'')}')">
-      <b>${esc(s.title)}</b>${s.artist ? ` <span style="color:var(--muted);font-size:12px">- ${esc(s.artist)}</span>` : ''}
-    </div>`
-  ).join('') : `<div class="song-option" style="color:var(--muted)">검색 결과 없음</div>`
+// ─── PRACTICE ────────────────────────────────────────────────────────────────
+async function loadPracticeSongs() {
+  S.songs = await sb.get('ssw_songs', '')
+  renderDD(S.songs)
 }
 
-function filterSongDropdown(val) {
-  const q = val.toLowerCase()
-  const filtered = q ? state.songs.filter(s => s.title.toLowerCase().includes(q) || (s.artist||'').toLowerCase().includes(q)) : state.songs
-  renderSongDropdown(filtered)
-  document.getElementById('song-dropdown').classList.add('open')
+function renderDD(songs) {
+  const dd = document.getElementById('song-dd')
+  dd.innerHTML = songs.length
+    ? songs.map(s => `<div class="song-option" onclick="selectSong('${s.id}','${esc(s.title)}','${esc(s.artist||'')}')">
+        <b>${esc(s.title)}</b>${s.artist ? ` <span style="color:var(--muted);font-size:12px">· ${esc(s.artist)}</span>` : ''}
+      </div>`).join('')
+    : `<div class="song-option" style="color:var(--muted)">곡이 없어요. 목표 세우기에서 추가하세요</div>`
 }
 
-function openSongDropdown() {
-  renderSongDropdown(state.songs)
-  document.getElementById('song-dropdown').classList.add('open')
-  document.addEventListener('click', closeSongDropdownOnClick, true)
+function filterDD(v) {
+  const q = v.toLowerCase()
+  renderDD(q ? S.songs.filter(s => s.title.toLowerCase().includes(q) || (s.artist||'').toLowerCase().includes(q)) : S.songs)
+  document.getElementById('song-dd').classList.add('open')
 }
 
-function closeSongDropdownOnClick(e) {
+function openDD() {
+  renderDD(S.songs)
+  document.getElementById('song-dd').classList.add('open')
+  setTimeout(() => document.addEventListener('click', closeOnClick, true), 10)
+}
+
+function closeOnClick(e) {
   if (!e.target.closest('.song-select-wrap')) {
-    document.getElementById('song-dropdown').classList.remove('open')
-    document.removeEventListener('click', closeSongDropdownOnClick, true)
+    document.getElementById('song-dd').classList.remove('open')
+    document.removeEventListener('click', closeOnClick, true)
   }
 }
 
-async function selectPracticeSong(id, title, artist) {
-  state.practiceSelectedSong = { id, title, artist }
+async function selectSong(id, title, artist) {
+  S.selSong = { id, title, artist }
   document.getElementById('practice-song-input').value = title + (artist ? ` - ${artist}` : '')
-  document.getElementById('song-dropdown').classList.remove('open')
+  document.getElementById('song-dd').classList.remove('open')
   document.getElementById('selected-song-info').style.display = 'block'
 
-  // Load goal
   const goals = await sb.get('ssw_goals', `song_id=eq.${id}`)
-  const gb = document.getElementById('goal-banner-wrap')
-  gb.innerHTML = goals.length ? `
-    <div class="goal-banner">
-      <div class="goal-banner-label">🎯 이 곡의 목표</div>
-      <div class="goal-banner-text">${esc(goals[0].goal_text)}</div>
-    </div>` : ''
+  document.getElementById('goal-banner-wrap').innerHTML = goals.length
+    ? `<div class="goal-banner"><div class="goal-banner-label">🎯 이 곡의 목표</div><div class="goal-banner-text">${esc(goals[0].goal_text)}</div></div>` : ''
 
-  // Load sheets
   const sheets = await sb.get('ssw_sheet_music', `song_id=eq.${id}`)
   const sw = document.getElementById('practice-sheets-wrap')
   sw.innerHTML = sheets.length ? `
-    <div style="padding:0 16px 8px">
-      <div class="card-title" style="margin-bottom:8px">📄 연결된 악보</div>
-      <div style="display:flex;gap:8px;overflow-x:auto">
-        ${sheets.map(s => `
-          <div style="flex-shrink:0;width:80px;cursor:pointer" onclick="previewSheet('${sb.fileUrl(s.storage_path)}','${esc(s.file_name)}')">
-            <div style="height:60px;background:var(--card2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px">${s.file_type&&s.file_type.includes('pdf')?'📄':'🖼'}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.file_name)}</div>
-          </div>`).join('')}
-      </div>
+    <div class="card-title" style="padding:0 16px 6px">📄 연결된 악보</div>
+    <div class="sheets-strip">
+      ${sheets.map(s => `<div class="sheet-thumb-sm" onclick="previewSheet('${sb.fileUrl(s.storage_path)}','${esc(s.file_name)}')">
+        <div class="th">${s.file_type?.includes('pdf') ? '📄' : '🖼️'}</div>
+        <div class="tn">${esc(s.file_name)}</div>
+      </div>`).join('')}
     </div>` : ''
 }
 
 async function startPractice() {
-  if (!state.practiceSelectedSong) {
-    const input = document.getElementById('practice-song-input').value.trim()
-    if (!input) { alert('곡을 선택하거나 입력해주세요'); return }
-    state.practiceSelectedSong = { id: null, title: input, artist: '' }
+  if (!S.selSong) {
+    const v = document.getElementById('practice-song-input').value.trim()
+    if (!v) { alert('곡을 선택하거나 입력해주세요'); return }
+    S.selSong = { id: null, title: v, artist: '' }
   }
   document.getElementById('practice-select-phase').style.display = 'none'
   document.getElementById('practice-timer-phase').style.display = 'block'
-  document.getElementById('timer-song-label').textContent = state.practiceSelectedSong.title + (state.practiceSelectedSong.artist ? ' - ' + state.practiceSelectedSong.artist : '')
-  state.timerSeconds = 0
-  state.timerPaused = false
-  state.practiceStartTime = new Date()
+  document.getElementById('timer-song-label').textContent = S.selSong.title + (S.selSong.artist ? ' · ' + S.selSong.artist : '')
+  S.secs = 0; S.paused = false
   updateTimerDisplay()
-  state.timer = setInterval(() => {
-    if (!state.timerPaused) { state.timerSeconds++; updateTimerDisplay() }
-  }, 1000)
-  if (state.practiceSelectedSong.id) loadPracticeLogs(state.practiceSelectedSong.id)
+  S.timer = setInterval(() => { if (!S.paused) { S.secs++; updateTimerDisplay() } }, 1000)
+  if (S.selSong.id) loadPracticeLogList(S.selSong.id)
 }
 
 function updateTimerDisplay() {
-  const m = String(Math.floor(state.timerSeconds/60)).padStart(2,'0')
-  const s = String(state.timerSeconds%60).padStart(2,'0')
+  const m = String(Math.floor(S.secs/60)).padStart(2,'0')
+  const s = String(S.secs%60).padStart(2,'0')
   document.getElementById('timer-display').textContent = `${m}:${s}`
 }
 
 function togglePause() {
-  state.timerPaused = !state.timerPaused
-  document.getElementById('pause-btn').textContent = state.timerPaused ? '▶ 계속하기' : '⏸ 일시정지'
+  S.paused = !S.paused
+  document.getElementById('pause-btn').textContent = S.paused ? '▶ 계속하기' : '⏸ 일시정지'
 }
 
 function stopPractice() {
-  clearInterval(state.timer)
-  state.timer = null
+  clearInterval(S.timer); S.timer = null
   document.getElementById('log-modal').style.display = 'flex'
 }
 
 async function saveLog() {
   const practiced = document.getElementById('log-practiced').value.trim()
   const learned = document.getElementById('log-learned').value.trim()
-  if (!practiced && !learned) { discardLog(); return }
-  await sb.post('ssw_practice_logs', {
-    song_id: state.practiceSelectedSong.id || null,
-    duration_seconds: state.timerSeconds,
-    what_practiced: practiced,
-    what_learned: learned,
-    practiced_at: new Date().toISOString().split('T')[0]
-  })
-  closeLogModal()
-  resetPractice()
+  if (practiced || learned) {
+    await sb.post('ssw_practice_logs', {
+      song_id: S.selSong?.id || null,
+      duration_seconds: S.secs,
+      what_practiced: practiced || null,
+      what_learned: learned || null,
+      practiced_at: new Date().toISOString().split('T')[0]
+    })
+  }
+  closeLogModal(); resetPractice()
 }
 
 function discardLog() { closeLogModal(); resetPractice() }
-
 function closeLogModal() {
   document.getElementById('log-modal').style.display = 'none'
   document.getElementById('log-practiced').value = ''
   document.getElementById('log-learned').value = ''
 }
-
 function resetPractice() {
-  state.practiceSelectedSong = null
-  state.timerSeconds = 0
+  S.selSong = null; S.secs = 0
   document.getElementById('practice-select-phase').style.display = 'block'
   document.getElementById('practice-timer-phase').style.display = 'none'
   document.getElementById('practice-song-input').value = ''
@@ -674,62 +891,67 @@ function resetPractice() {
   document.getElementById('timer-display').textContent = '00:00'
 }
 
-async function loadPracticeLogs(songId) {
+async function loadPracticeLogList(songId) {
   const logs = await sb.get('ssw_practice_logs', `song_id=eq.${songId}`)
-  const el = document.getElementById('practice-log-list')
+  const el = document.getElementById('log-list-display')
   el.innerHTML = logs.length ? logs.map(l => `
     <div class="log-item">
-      <span class="log-date">${l.practiced_at}</span>
-      <span class="log-duration">${Math.round(l.duration_seconds/60)}분</span>
-      ${l.what_practiced ? `<div class="log-text">🎸 ${esc(l.what_practiced)}</div>` : ''}
-      ${l.what_learned ? `<div class="log-text" style="margin-top:4px;color:var(--accent)">💡 ${esc(l.what_learned)}</div>` : ''}
-    </div>`).join('') : '<div class="empty">기록이 없어요</div>'
+      <span class="log-dur">${Math.round(l.duration_seconds/60)}분</span>
+      <div class="log-date">${l.practiced_at}</div>
+      ${l.what_practiced ? `<div class="log-txt">🎸 ${esc(l.what_practiced)}</div>` : ''}
+      ${l.what_learned ? `<div class="log-txt" style="color:var(--accent)">💡 ${esc(l.what_learned)}</div>` : ''}
+    </div>`).join('') : '<div class="empty" style="padding:16px 0">아직 기록이 없어요</div>'
 }
 
-// ===== GOALS VIEW =====
+// ─── GOALS ───────────────────────────────────────────────────────────────────
 async function loadGoalsView() {
-  state.songs = await sb.get('ssw_songs', '')
+  S.songs = await sb.get('ssw_songs', '')
   renderSongsList()
-  populateGoalSongSelect()
-  await loadWishlist()
+  populateGoalSel()
+  S.wishlist = await sb.get('ssw_wishlist', '')
+  renderWishlist()
 }
 
 function renderSongsList() {
-  const el = document.getElementById('songs-list')
   const LABEL = { wishlist:'연습 예정', practicing:'연습 중', done:'완료' }
   const CLS = { wishlist:'badge-wishlist', practicing:'badge-practicing', done:'badge-done' }
-  el.innerHTML = state.songs.length ? state.songs.map(s => `
-    <div class="song-item">
-      <div class="song-item-info">
-        <div class="song-item-title">${esc(s.title)}</div>
-        <div class="song-item-sub">${esc(s.artist||'아티스트 미상')}${s.chord_url ? ` · <a href="${s.chord_url}" target="_blank" style="color:var(--accent);text-decoration:none">코드보기↗</a>` : ''}</div>
-      </div>
-      <span class="song-status-badge ${CLS[s.status]}">${LABEL[s.status]}</span>
-      <button class="btn-icon" onclick="deleteSong('${s.id}')">🗑</button>
-    </div>`).join('') : '<div class="empty">곡이 없어요. + 버튼으로 추가하세요</div>'
+  document.getElementById('songs-list').innerHTML = S.songs.length
+    ? S.songs.map(s => `
+      <div class="song-item">
+        <div class="song-item-info">
+          <div class="song-item-title">${esc(s.title)}</div>
+          <div class="song-item-sub">${esc(s.artist||'아티스트 미상')}${s.chord_url ? ` · <a href="${s.chord_url}" target="_blank">코드↗</a>` : ''}</div>
+        </div>
+        <span class="badge ${CLS[s.status]||'badge-done'}">${LABEL[s.status]||s.status}</span>
+        <button class="btn-icon" onclick="deleteSong('${s.id}')">🗑</button>
+      </div>`).join('')
+    : '<div class="empty">+ 버튼으로 곡을 추가하세요</div>'
 }
 
-function populateGoalSongSelect() {
-  const sel = document.getElementById('goal-song-select')
-  sel.innerHTML = '<option value="">-- 곡 선택 --</option>' +
-    state.songs.map(s => `<option value="${s.id}">${esc(s.title)}</option>`).join('')
+function populateGoalSel() {
+  document.getElementById('goal-song-sel').innerHTML =
+    '<option value="">— 곡 선택 —</option>' +
+    S.songs.map(s => `<option value="${s.id}">${esc(s.title)}</option>`).join('')
 }
 
 async function loadGoalsForSong(songId) {
-  if (!songId) { document.getElementById('goals-list').innerHTML = '<div class="empty">곡을 선택하세요</div>'; document.getElementById('goal-add-form').style.display='none'; return }
-  document.getElementById('goal-add-form').style.display = 'block'
+  const add = document.getElementById('goal-add-form')
+  if (!songId) { document.getElementById('goals-list').innerHTML = '<div class="empty">곡을 선택하세요</div>'; add.style.display='none'; return }
+  add.style.display = 'block'
   const goals = await sb.get('ssw_goals', `song_id=eq.${songId}`)
-  const el = document.getElementById('goals-list')
-  el.innerHTML = goals.length ? goals.map(g => `
-    <div class="goal-item">
-      <div class="goal-item-song">${esc(state.songs.find(s=>s.id===songId)?.title||'')}</div>
-      <div class="goal-item-text">${esc(g.goal_text)}</div>
-      <button style="background:none;color:var(--muted);font-size:11px;border:none;cursor:pointer;margin-top:4px" onclick="deleteGoal('${g.id}','${songId}')">삭제</button>
-    </div>`).join('') : '<div class="empty">목표가 없어요. 아래에 작성하세요</div>'
+  const song = S.songs.find(s => s.id === songId)
+  document.getElementById('goals-list').innerHTML = goals.length
+    ? goals.map(g => `
+      <div class="goal-item">
+        <div class="goal-item-song">${esc(song?.title||'')}</div>
+        <div class="goal-item-text">${esc(g.goal_text)}</div>
+        <button class="goal-item-del" onclick="deleteGoal('${g.id}','${songId}')">삭제</button>
+      </div>`).join('')
+    : '<div class="empty">목표가 없어요. 아래에 작성하세요</div>'
 }
 
 async function addGoal() {
-  const songId = document.getElementById('goal-song-select').value
+  const songId = document.getElementById('goal-song-sel').value
   const text = document.getElementById('new-goal-text').value.trim()
   if (!songId || !text) return
   await sb.post('ssw_goals', { song_id: songId, goal_text: text })
@@ -739,260 +961,254 @@ async function addGoal() {
 
 async function deleteGoal(id, songId) {
   if (!confirm('목표를 삭제할까요?')) return
-  await sb.del('ssw_goals', id)
-  loadGoalsForSong(songId)
+  await sb.del('ssw_goals', id); loadGoalsForSong(songId)
 }
 
-async function loadWishlist() {
-  state.wishlist = await sb.get('ssw_wishlist', '')
-  renderWishlist()
+async function deleteSong(id) {
+  if (!confirm('이 곡을 삭제할까요? 연결된 기록도 삭제됩니다.')) return
+  await sb.del('ssw_songs', id); loadGoalsView()
 }
 
 function renderWishlist() {
-  const el = document.getElementById('vision-list')
   const CAT = { instrument:'🎸', experience:'✨' }
-  const NAME = { instrument:'악기/장비', experience:'경험' }
-  el.innerHTML = state.wishlist.length ? state.wishlist.map(w => `
-    <div class="vision-item ${w.done?'done':''}">
-      <div class="vision-check ${w.done?'done':''}" onclick="toggleVision('${w.id}',${w.done})">${w.done?'✓':''}</div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:600">${CAT[w.category]||'•'} ${esc(w.title)}</div>
-        <div class="vision-cat">${NAME[w.category]||w.category}${w.notes ? ` · ${esc(w.notes)}` : ''}</div>
-      </div>
-      <button class="btn-icon" onclick="deleteVision('${w.id}')">🗑</button>
-    </div>`).join('') : '<div class="empty">버킷리스트를 추가해보세요</div>'
+  const NM = { instrument:'악기 / 장비', experience:'경험' }
+  document.getElementById('vision-list').innerHTML = S.wishlist.length
+    ? S.wishlist.map(w => `
+      <div class="vision-item ${w.done?'done':''}">
+        <div class="vision-check ${w.done?'done':''}" onclick="toggleVision('${w.id}',${w.done})">${w.done?'✓':''}</div>
+        <div style="flex:1">
+          <div class="vision-title">${CAT[w.category]||'•'} ${esc(w.title)}</div>
+          <div class="vision-cat">${NM[w.category]||w.category}${w.notes ? ' · ' + esc(w.notes) : ''}</div>
+        </div>
+        <button class="btn-icon" onclick="deleteVision('${w.id}')">🗑</button>
+      </div>`).join('')
+    : '<div class="empty">악기, 경험… 꿈꾸는 것들을 기록하세요</div>'
 }
 
-async function toggleVision(id, isDone) {
-  await sb.patch('ssw_wishlist', id, { done: !isDone })
-  await loadWishlist()
+async function toggleVision(id, done) {
+  await sb.patch('ssw_wishlist', id, { done: !done })
+  S.wishlist = await sb.get('ssw_wishlist', ''); renderWishlist()
 }
 
 async function deleteVision(id) {
   await sb.del('ssw_wishlist', id)
-  await loadWishlist()
+  S.wishlist = await sb.get('ssw_wishlist', ''); renderWishlist()
 }
 
-// ===== GOAL TAB SWITCHING =====
-function switchGoalTab(tab, btn) {
-  document.querySelectorAll('.pill-tab').forEach(b=>b.classList.remove('active'))
+function switchGTab(tab, btn) {
+  document.querySelectorAll('#view-goals .pill-tab').forEach(b => b.classList.remove('active'))
   btn.classList.add('active')
-  document.getElementById('gtab-songs').style.display = tab==='songs'?'block':'none'
-  document.getElementById('gtab-goals').style.display = tab==='goals'?'block':'none'
-  document.getElementById('gtab-vision').style.display = tab==='vision'?'block':'none'
+  document.getElementById('gtab-songs').style.display = tab==='songs' ? 'block' : 'none'
+  document.getElementById('gtab-goals').style.display = tab==='goals' ? 'block' : 'none'
+  document.getElementById('gtab-vision').style.display = tab==='vision' ? 'block' : 'none'
 }
 
-// ===== SONG MODAL =====
-function showSongModal() { document.getElementById('add-song-modal').style.display='flex' }
-function closeSongModal() { document.getElementById('add-song-modal').style.display='none'; clearSongForm() }
-function clearSongForm() {
-  document.getElementById('song-title-in').value=''
-  document.getElementById('song-artist-in').value=''
-  document.getElementById('song-chord-in').value=''
-  document.getElementById('song-status-in').value='wishlist'
+// ─── SONG MODAL ──────────────────────────────────────────────────────────────
+function showSongModal() { document.getElementById('song-modal').style.display = 'flex' }
+function closeSongModal() {
+  document.getElementById('song-modal').style.display = 'none'
+  ;['sng-title','sng-artist','sng-chord'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('sng-status').value = 'wishlist'
 }
 async function saveSong() {
-  const title = document.getElementById('song-title-in').value.trim()
+  const title = document.getElementById('sng-title').value.trim()
   if (!title) { alert('제목을 입력하세요'); return }
   await sb.post('ssw_songs', {
     title,
-    artist: document.getElementById('song-artist-in').value.trim() || null,
-    chord_url: document.getElementById('song-chord-in').value.trim() || null,
-    status: document.getElementById('song-status-in').value
+    artist: document.getElementById('sng-artist').value.trim() || null,
+    chord_url: document.getElementById('sng-chord').value.trim() || null,
+    status: document.getElementById('sng-status').value
   })
-  closeSongModal()
-  loadGoalsView()
-}
-async function deleteSong(id) {
-  if (!confirm('이 곡을 삭제할까요? 연결된 기록도 삭제됩니다.')) return
-  await sb.del('ssw_songs', id)
-  loadGoalsView()
+  closeSongModal(); loadGoalsView()
 }
 
-// ===== VISION MODAL =====
-function showVisionModal() { document.getElementById('add-vision-modal').style.display='flex' }
-function closeVisionModal() { document.getElementById('add-vision-modal').style.display='none' }
+// ─── VISION MODAL ────────────────────────────────────────────────────────────
+function showVisionModal() { document.getElementById('vision-modal').style.display = 'flex' }
+function closeVisionModal() { document.getElementById('vision-modal').style.display = 'none' }
 async function saveVision() {
-  const title = document.getElementById('vision-title-in').value.trim()
+  const title = document.getElementById('vis-title').value.trim()
   if (!title) { alert('내용을 입력하세요'); return }
   await sb.post('ssw_wishlist', {
-    category: document.getElementById('vision-cat-in').value,
+    category: document.getElementById('vis-cat').value,
     title,
-    notes: document.getElementById('vision-notes-in').value.trim() || null
+    notes: document.getElementById('vis-notes').value.trim() || null
   })
-  document.getElementById('vision-title-in').value=''
-  document.getElementById('vision-notes-in').value=''
+  document.getElementById('vis-title').value = ''
+  document.getElementById('vis-notes').value = ''
   closeVisionModal()
-  loadWishlist()
+  S.wishlist = await sb.get('ssw_wishlist', ''); renderWishlist()
 }
 
-// ===== SHEETS =====
+// ─── SHEETS ──────────────────────────────────────────────────────────────────
 async function loadSheets() {
-  state.sheets = await sb.get('ssw_sheet_music', '')
+  S.sheets = await sb.get('ssw_sheet_music', '')
   const allSongs = await sb.get('ssw_songs', '')
-  const songMap = Object.fromEntries(allSongs.map(s=>[s.id,s.title]))
+  const songMap = Object.fromEntries(allSongs.map(s => [s.id, s.title]))
   const el = document.getElementById('sheets-grid')
-  const EXT = f => f.split('.').pop().toLowerCase()
-  el.innerHTML = state.sheets.length ? state.sheets.map(s => `
-    <div class="sheet-card" onclick="previewSheet('${sb.fileUrl(s.storage_path)}','${esc(s.file_name)}')">
-      <div class="sheet-thumb">${EXT(s.file_name)==='pdf'?'📄':'🖼️'}</div>
-      <div class="sheet-info">
-        <div class="sheet-name">${esc(s.file_name)}</div>
-        <div class="sheet-song">${s.song_id ? esc(songMap[s.song_id]||'') : '미분류'}</div>
-      </div>
-    </div>`).join('') : '<div class="empty" style="grid-column:1/-1">악보가 없어요</div>'
+  el.innerHTML = S.sheets.length
+    ? S.sheets.map(s => `
+      <div class="sheet-card" onclick="previewSheet('${sb.fileUrl(s.storage_path)}','${esc(s.file_name)}')">
+        <div class="sheet-thumb">${s.file_name.toLowerCase().endsWith('.pdf') ? '📄' : '🖼️'}</div>
+        <div class="sheet-meta">
+          <div class="sheet-name">${esc(s.file_name)}</div>
+          <div class="sheet-song">${s.song_id ? esc(songMap[s.song_id]||'') : '미분류'}</div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty" style="grid-column:1/-1">+ 버튼으로 악보를 업로드하세요</div>'
 }
 
 async function showUploadModal() {
   const songs = await sb.get('ssw_songs', '')
-  const sel = document.getElementById('sheet-song-select')
-  sel.innerHTML = '<option value="">-- 곡 선택 (선택사항) --</option>' + songs.map(s=>`<option value="${s.id}">${esc(s.title)}</option>`).join('')
-  document.getElementById('upload-sheet-modal').style.display='flex'
+  document.getElementById('sheet-song-sel').innerHTML =
+    '<option value="">— 미분류 —</option>' +
+    songs.map(s => `<option value="${s.id}">${esc(s.title)}</option>`).join('')
+  document.getElementById('upload-modal').style.display = 'flex'
 }
-function closeUploadModal() { document.getElementById('upload-sheet-modal').style.display='none' }
+function closeUploadModal() { document.getElementById('upload-modal').style.display = 'none' }
 
 async function uploadSheet() {
-  const file = document.getElementById('sheet-file-input').files[0]
+  const file = document.getElementById('sheet-file').files[0]
   if (!file) { alert('파일을 선택하세요'); return }
-  const songId = document.getElementById('sheet-song-select').value || null
+  const songId = document.getElementById('sheet-song-sel').value || null
   const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`
   const ok = await sb.upload(path, file)
-  if (!ok) { alert('업로드 실패. 다시 시도해주세요'); return }
+  if (!ok) { alert('업로드에 실패했어요. 파일 크기나 형식을 확인해주세요.'); return }
   await sb.post('ssw_sheet_music', { song_id: songId, file_name: file.name, storage_path: path, file_type: file.type })
-  closeUploadModal()
-  document.getElementById('sheet-file-input').value=''
-  loadSheets()
+  document.getElementById('sheet-file').value = ''
+  closeUploadModal(); loadSheets()
 }
 
 function previewSheet(url, name) {
   document.getElementById('preview-title').textContent = name
   document.getElementById('preview-dl').href = url
-  const body = document.getElementById('preview-body')
   const isPdf = name.toLowerCase().endsWith('.pdf')
-  body.innerHTML = isPdf
+  document.getElementById('preview-body').innerHTML = isPdf
     ? `<iframe src="${url}" width="100%" height="100%"></iframe>`
     : `<img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto">`
-  document.getElementById('preview-overlay').style.display='flex'
+  document.getElementById('preview-ov').style.display = 'flex'
 }
 function closePreview() {
-  document.getElementById('preview-overlay').style.display='none'
-  document.getElementById('preview-body').innerHTML=''
+  document.getElementById('preview-ov').style.display = 'none'
+  document.getElementById('preview-body').innerHTML = ''
 }
 
-// ===== TUNER =====
-let tunerAudio = null, tunerAnalyser = null, tunerAnimFrame = null
-let tunerActive = false, refOsc = null, activeRefBtn = null
+// ─── TUNER ───────────────────────────────────────────────────────────────────
+let tAudio = null, tAnalyser = null, tFrame = null, tActive = false
+let refOsc = null, activeRefBtn = null
 
 const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
-function freqToNote(freq) {
-  const midi = Math.round(12 * Math.log2(freq / 440) + 69)
-  return { name: NOTES[midi%12], octave: Math.floor(midi/12)-1, cents: Math.round(1200*Math.log2(freq/(440*Math.pow(2,(midi-69)/12)))) }
+
+function autoCorrelate(buf, sr) {
+  let rms = 0
+  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i]
+  rms = Math.sqrt(rms / buf.length)
+  if (rms < 0.01) return -1
+  const half = Math.floor(buf.length / 2)
+  let bestOff = -1, bestCorr = 0, lastCorr = 1
+  for (let off = 0; off < half; off++) {
+    let corr = 0
+    for (let i = 0; i < half; i++) corr += Math.abs(buf[i] - buf[i+off])
+    corr = 1 - corr / half
+    if (corr > 0.9 && corr > lastCorr) { bestCorr = corr; bestOff = off }
+    lastCorr = corr
+  }
+  return bestOff > 0 ? sr / bestOff : -1
 }
 
-function autoCorrelate(buf, sampleRate) {
-  let rms = 0
-  for (let i=0;i<buf.length;i++) rms += buf[i]*buf[i]
-  rms = Math.sqrt(rms/buf.length)
-  if (rms < 0.01) return -1
-  const half = Math.floor(buf.length/2)
-  let bestOff=-1, bestCorr=0, lastCorr=1
-  for (let off=0;off<half;off++) {
-    let corr=0
-    for (let i=0;i<half;i++) corr += Math.abs(buf[i]-buf[i+off])
-    corr = 1-(corr/half)
-    if (corr>0.9 && corr>lastCorr) { bestCorr=corr; bestOff=off }
-    lastCorr=corr
-  }
-  return bestOff>0 ? sampleRate/bestOff : -1
+function freqToNote(freq) {
+  const midi = Math.round(12 * Math.log2(freq / 440) + 69)
+  const exact = 440 * Math.pow(2, (midi - 69) / 12)
+  const cents = Math.round(1200 * Math.log2(freq / exact))
+  return { name: NOTES[((midi % 12) + 12) % 12], octave: Math.floor(midi / 12) - 1, cents }
 }
 
 async function toggleTuner() {
-  if (tunerActive) {
-    stopTuner()
-  } else {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true,video:false})
-      tunerAudio = new AudioContext()
-      tunerAnalyser = tunerAudio.createAnalyser()
-      tunerAnalyser.fftSize = 2048
-      tunerAudio.createMediaStreamSource(stream).connect(tunerAnalyser)
-      tunerActive = true
-      document.getElementById('tuner-btn').textContent = '⏹ 튜너 끄기'
-      document.getElementById('tuner-btn').classList.add('active')
-      document.getElementById('tuner-status').textContent = '마이크 감지 중...'
-      tunerLoop()
-    } catch(e) {
-      document.getElementById('tuner-status').textContent = '마이크 권한이 필요해요'
-    }
+  if (tActive) { stopTuner(); return }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    tAudio = new AudioContext()
+    tAnalyser = tAudio.createAnalyser()
+    tAnalyser.fftSize = 2048
+    tAudio.createMediaStreamSource(stream).connect(tAnalyser)
+    tActive = true
+    document.getElementById('tuner-toggle-btn').textContent = '⏹ 튜너 끄기'
+    document.getElementById('tuner-toggle-btn').classList.add('on')
+    document.getElementById('tuner-status').textContent = '마이크 감지 중…'
+    tunerLoop()
+  } catch {
+    document.getElementById('tuner-status').textContent = '마이크 권한이 필요해요'
   }
 }
 
 function tunerLoop() {
-  if (!tunerActive) return
-  const buf = new Float32Array(tunerAnalyser.fftSize)
-  tunerAnalyser.getFloatTimeDomainData(buf)
-  const freq = autoCorrelate(buf, tunerAudio.sampleRate)
+  if (!tActive) return
+  const buf = new Float32Array(tAnalyser.fftSize)
+  tAnalyser.getFloatTimeDomainData(buf)
+  const freq = autoCorrelate(buf, tAudio.sampleRate)
+  const noteEl = document.getElementById('tuner-note')
+  const needle = document.getElementById('tuner-needle')
   if (freq > 50 && freq < 1200) {
     const n = freqToNote(freq)
-    const cents = n.cents
-    document.getElementById('tuner-note').textContent = n.name + n.octave
+    noteEl.textContent = n.name + n.octave
     document.getElementById('tuner-freq').textContent = freq.toFixed(1) + ' Hz'
-    document.getElementById('tuner-cents').textContent = (cents>0?'+':'')+cents+' cents'
-    const pct = 50 + (cents/50)*45
-    const needle = document.getElementById('tuner-needle')
-    needle.style.left = Math.max(5,Math.min(95,pct)) + '%'
-    const abs = Math.abs(cents)
-    const color = abs<5?'#10b981':abs<15?'#f59e0b':'#ef4444'
+    document.getElementById('tuner-cents').textContent = (n.cents > 0 ? '+' : '') + n.cents + ' cents'
+    const pct = 50 + (n.cents / 50) * 44
+    needle.style.left = Math.max(5, Math.min(95, pct)) + '%'
+    const abs = Math.abs(n.cents)
+    const color = abs < 5 ? 'var(--success)' : abs < 15 ? 'var(--accent)' : 'var(--danger)'
     needle.style.background = color
-    document.getElementById('tuner-note').style.color = color
-    document.getElementById('tuner-intonation').textContent = abs<5?'✓ 정확해요':abs<15?(cents<0?'♭ 낮아요':'♯ 높아요'):(cents<0?'↓ 많이 낮아요':'↑ 많이 높아요')
+    noteEl.style.color = color
+    document.getElementById('tuner-verdict').textContent = abs < 5 ? '✓ 정확해요' : n.cents < 0 ? '♭ 낮아요' : '♯ 높아요'
     document.getElementById('tuner-status').textContent = ''
   } else {
-    document.getElementById('tuner-note').textContent = '--'
-    document.getElementById('tuner-note').style.color = 'var(--muted)'
-    document.getElementById('tuner-status').textContent = '소리를 감지하지 못했어요...'
+    noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
+    document.getElementById('tuner-verdict').textContent = '—'
+    document.getElementById('tuner-status').textContent = '소리를 감지하지 못했어요…'
   }
-  tunerAnimFrame = requestAnimationFrame(tunerLoop)
+  tFrame = requestAnimationFrame(tunerLoop)
 }
 
 function stopTuner() {
-  tunerActive = false
-  if (tunerAnimFrame) cancelAnimationFrame(tunerAnimFrame)
-  if (tunerAudio) { tunerAudio.close(); tunerAudio=null }
-  document.getElementById('tuner-btn').textContent = '🎤 튜너 시작'
-  document.getElementById('tuner-btn').classList.remove('active')
-  document.getElementById('tuner-note').textContent='--'
-  document.getElementById('tuner-note').style.color='var(--muted)'
-  document.getElementById('tuner-freq').textContent='-- Hz'
-  document.getElementById('tuner-cents').textContent='0 cents'
-  document.getElementById('tuner-intonation').textContent='-'
-  document.getElementById('tuner-needle').style.left='50%'
-  document.getElementById('tuner-status').textContent=''
+  tActive = false
+  if (tFrame) cancelAnimationFrame(tFrame)
+  if (tAudio) { tAudio.close(); tAudio = null }
+  document.getElementById('tuner-toggle-btn').textContent = '🎤 튜너 시작'
+  document.getElementById('tuner-toggle-btn').classList.remove('on')
+  const noteEl = document.getElementById('tuner-note')
+  noteEl.textContent = '—'; noteEl.style.color = 'var(--muted)'
+  document.getElementById('tuner-needle').style.left = '50%'
+  document.getElementById('tuner-verdict').textContent = '—'
+  document.getElementById('tuner-status').textContent = ''
+  document.getElementById('tuner-cents').textContent = '0 cents'
+  document.getElementById('tuner-freq').textContent = '— Hz'
 }
 
 function playRef(freq, label, btn) {
-  if (refOsc) { refOsc.stop(); refOsc=null; if(activeRefBtn){activeRefBtn.classList.remove('playing');activeRefBtn=null} }
-  if (!window._refAudio) window._refAudio = new AudioContext()
-  const ctx = window._refAudio
-  if (ctx.state==='suspended') ctx.resume()
+  if (refOsc) { try { refOsc.stop() } catch {} refOsc = null }
+  if (activeRefBtn) { activeRefBtn.classList.remove('playing'); activeRefBtn = null }
+  if (!window._refCtx) window._refCtx = new AudioContext()
+  const ctx = window._refCtx
+  if (ctx.state === 'suspended') ctx.resume()
   const osc = ctx.createOscillator()
   const gain = ctx.createGain()
   osc.connect(gain); gain.connect(ctx.destination)
-  osc.type='sine'; osc.frequency.value=freq
-  gain.gain.setValueAtTime(0.3,ctx.currentTime)
-  gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+2)
-  osc.start(); osc.stop(ctx.currentTime+2)
-  refOsc = osc
-  btn.classList.add('playing')
-  activeRefBtn = btn
-  setTimeout(()=>{ btn.classList.remove('playing'); if(activeRefBtn===btn)activeRefBtn=null }, 2000)
+  osc.type = 'sine'; osc.frequency.value = freq
+  gain.gain.setValueAtTime(0.25, ctx.currentTime)
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2)
+  osc.start(); osc.stop(ctx.currentTime + 2)
+  refOsc = osc; btn.classList.add('playing'); activeRefBtn = btn
+  setTimeout(() => { btn.classList.remove('playing'); if (activeRefBtn === btn) activeRefBtn = null }, 2000)
 }
 
-// ===== UTILS =====
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
 
-// ===== INIT =====
+// ─── INIT ────────────────────────────────────────────────────────────────────
+renderHomeStrings()
 nav('home')
 </script>
+
 </body>
 </html>
