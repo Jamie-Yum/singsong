@@ -2055,10 +2055,10 @@ function chordSVG(chord) {
   }
   for (let i = 1; i <= NF; i++) {
     const y = TOP + i * FS
-    svg += `<line x1="${SX[0]}" y1="${y}" x2="${SX[last]}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`
+    svg += `<line x1="${SX[0]}" y1="${y}" x2="${SX[last]}" y2="${y}" stroke="var(--muted)" stroke-width="1.2" opacity=".5"/>`
   }
   SX.forEach(x => {
-    svg += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOT}" stroke="var(--border)" stroke-width="1"/>`
+    svg += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOT}" stroke="var(--muted)" stroke-width="1" opacity=".45"/>`
   })
   if (chord.barre) {
     const bRel = chord.barre.fret - sf + 1
