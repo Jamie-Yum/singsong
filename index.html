@@ -780,6 +780,10 @@ a{color:var(--accent)}
     <button class="back-btn" onclick="nav('home')">←</button>
     <h2>🤞 코드 운지법</h2>
   </div>
+  <div style="display:flex;gap:8px;padding:0 16px 8px">
+    <button class="inst-btn active" id="chord-inst-guitar" onclick="switchChordInstrument('guitar')">기타</button>
+    <button class="inst-btn" id="chord-inst-ukulele" onclick="switchChordInstrument('ukulele')">우쿨렐레</button>
+  </div>
   <div style="padding:0 16px 12px">
     <input type="text" id="chord-search" placeholder="코드 검색 (예: Am, G7, Cmaj7)…" oninput="searchChords(this.value)">
   </div>
@@ -1969,6 +1973,48 @@ const CHORD_DB = {
     { label:'Em형 바레 5fr', frets:[5,7,7,5,7,5], startFret:5, fingers:[1,3,4,1,4,1], barre:{fret:5,from:0,to:5} },
   ],
 }
+const UKE_CHORD_DB = {
+  'C':     [{ label:'오픈', frets:[0,0,0,3], fingers:[0,0,0,3] }],
+  'D':     [{ label:'오픈', frets:[2,2,2,0], fingers:[1,2,3,0] }],
+  'E':     [{ label:'', frets:[4,4,4,2], startFret:2, fingers:[3,3,3,1] }],
+  'F':     [{ label:'오픈', frets:[2,0,1,0], fingers:[2,0,1,0] }],
+  'G':     [{ label:'오픈', frets:[0,2,3,2], fingers:[0,1,3,2] }],
+  'A':     [{ label:'오픈', frets:[2,1,0,0], fingers:[2,1,0,0] }],
+  'B':     [{ label:'', frets:[4,3,2,2], startFret:2, fingers:[3,2,1,1] }],
+  'Am':    [{ label:'오픈', frets:[2,0,0,0], fingers:[1,0,0,0] }],
+  'Bm':    [{ label:'', frets:[4,2,2,2], startFret:2, fingers:[4,1,1,1], barre:{fret:2,from:1,to:3} }],
+  'Cm':    [{ label:'', frets:[0,3,3,3], fingers:[0,1,2,3] }],
+  'Dm':    [{ label:'오픈', frets:[2,2,1,0], fingers:[2,3,1,0] }],
+  'Em':    [{ label:'오픈', frets:[0,4,3,2], fingers:[0,4,3,2] }],
+  'Fm':    [{ label:'', frets:[1,0,1,3], fingers:[1,0,2,4] }],
+  'Gm':    [{ label:'오픈', frets:[0,2,3,1], fingers:[0,2,3,1] }],
+  'A7':    [{ label:'오픈', frets:[0,1,0,0], fingers:[0,1,0,0] }],
+  'B7':    [{ label:'오픈', frets:[2,3,2,2], fingers:[1,3,1,2] }],
+  'C7':    [{ label:'오픈', frets:[0,0,0,1], fingers:[0,0,0,1] }],
+  'D7':    [{ label:'오픈', frets:[2,2,2,3], fingers:[1,2,3,4] }],
+  'E7':    [{ label:'오픈', frets:[1,2,0,2], fingers:[1,2,0,3] }],
+  'G7':    [{ label:'오픈', frets:[0,2,1,2], fingers:[0,2,1,3] }],
+  'Am7':   [{ label:'오픈 (전체)', frets:[0,0,0,0], fingers:[0,0,0,0] }],
+  'Dm7':   [{ label:'오픈', frets:[2,2,1,3], fingers:[2,3,1,4] }],
+  'Em7':   [{ label:'오픈', frets:[0,2,0,2], fingers:[0,2,0,3] }],
+  'Cmaj7': [{ label:'오픈', frets:[0,0,0,2], fingers:[0,0,0,1] }],
+  'Fmaj7': [{ label:'오픈', frets:[2,4,1,0], fingers:[2,4,1,0] }],
+  'Gmaj7': [{ label:'오픈', frets:[0,2,2,2], fingers:[0,1,2,3] }],
+  'Amaj7': [{ label:'오픈', frets:[1,1,0,0], fingers:[1,2,0,0] }],
+  'Cadd9': [{ label:'', frets:[0,2,0,3], fingers:[0,1,0,2] }],
+  'Dsus2': [{ label:'오픈', frets:[2,2,0,0], fingers:[1,2,0,0] }],
+  'Gsus4': [{ label:'오픈', frets:[0,2,3,3], fingers:[0,1,2,3] }],
+  'Asus2': [{ label:'오픈', frets:[2,4,0,2], fingers:[2,4,0,3] }],
+  'Cdim':  [{ label:'', frets:[2,3,2,3], fingers:[1,3,2,4] }],
+  'Gdim':  [{ label:'오픈', frets:[0,1,0,1], fingers:[0,1,0,2] }],
+}
+const UKE_CHORD_CATS = {
+  '메이저': ['C','D','E','F','G','A','B'],
+  '마이너': ['Am','Bm','Cm','Dm','Em','Fm','Gm'],
+  '7th':    ['A7','B7','C7','D7','E7','G7','Am7','Dm7','Em7'],
+  'maj7':   ['Cmaj7','Fmaj7','Gmaj7','Amaj7'],
+  '기타':   ['Cadd9','Dsus2','Gsus4','Asus2','Cdim','Gdim'],
+}
 const CHORD_CATS = {
   '메이저': ['C','D','E','F','G','A','B'],
   '마이너': ['Am','Bm','Cm','Dm','Em','Fm','Gm'],
@@ -1979,24 +2025,37 @@ const CHORD_CATS = {
   '어드밴스드': ['Caug','Gaug','Bdim','Bm7b5','A6','Am6'],
 }
 let chordCat = '메이저'
+let chordInstrument = 'guitar'
+function activeChordDB() { return chordInstrument === 'guitar' ? CHORD_DB : UKE_CHORD_DB }
+function activeChordCats() { return chordInstrument === 'guitar' ? CHORD_CATS : UKE_CHORD_CATS }
+function switchChordInstrument(inst) {
+  chordInstrument = inst
+  document.getElementById('chord-inst-guitar').classList.toggle('active', inst === 'guitar')
+  document.getElementById('chord-inst-ukulele').classList.toggle('active', inst === 'ukulele')
+  chordCat = '메이저'
+  document.getElementById('chord-search').value = ''
+  loadChordsView()
+}
 
 function chordSVG(chord) {
   const W = 70, H = 90
-  const SX = [5, 17, 29, 41, 53, 65]
+  const ns = chord.frets.length
+  const SX = ns === 4 ? [8, 23, 38, 53] : [5, 17, 29, 41, 53, 65]
+  const last = ns - 1
   const TOP = 20, FS = 16, NF = 4
   const BOT = TOP + NF * FS
   const R = 6
   const sf = chord.startFret || 1
   let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">`
   if (sf === 1) {
-    svg += `<rect x="${SX[0]}" y="${TOP-4}" width="${SX[5]-SX[0]}" height="4" rx="1" fill="var(--text)" opacity=".75"/>`
+    svg += `<rect x="${SX[0]}" y="${TOP-4}" width="${SX[last]-SX[0]}" height="4" rx="1" fill="var(--text)" opacity=".75"/>`
   } else {
     svg += `<text x="${W-2}" y="${TOP+5}" text-anchor="end" font-size="7" fill="var(--muted)">${sf}fr</text>`
-    svg += `<line x1="${SX[0]}" y1="${TOP}" x2="${SX[5]}" y2="${TOP}" stroke="var(--border)" stroke-width="1.5"/>`
+    svg += `<line x1="${SX[0]}" y1="${TOP}" x2="${SX[last]}" y2="${TOP}" stroke="var(--border)" stroke-width="1.5"/>`
   }
   for (let i = 1; i <= NF; i++) {
     const y = TOP + i * FS
-    svg += `<line x1="${SX[0]}" y1="${y}" x2="${SX[5]}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`
+    svg += `<line x1="${SX[0]}" y1="${y}" x2="${SX[last]}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`
   }
   SX.forEach(x => {
     svg += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOT}" stroke="var(--border)" stroke-width="1"/>`
@@ -2019,7 +2078,7 @@ function chordSVG(chord) {
       const fy = TOP + (relFret - 0.5) * FS
       svg += `<circle cx="${x}" cy="${fy}" r="${R}" fill="var(--accent)"/>`
       if (chord.fingers?.[i]) {
-        svg += `<text x="${x}" y="${fy+2.5}" text-anchor="middle" dominant-baseline="middle" font-size="6" fill="#000" font-weight="700">${chord.fingers[i]}</text>`
+        svg += `<text x="${x}" y="${fy+2.5}" text-anchor="middle" dominant-baseline="middle" font-size="6" fill="#fff" font-weight="700">${chord.fingers[i]}</text>`
       }
     }
   })
@@ -2028,38 +2087,43 @@ function chordSVG(chord) {
 }
 
 function loadChordsView() {
+  const cats = activeChordCats()
+  if (!Object.keys(cats).includes(chordCat)) chordCat = '메이저'
   const catEl = document.getElementById('chord-cats')
-  catEl.innerHTML = Object.keys(CHORD_CATS).map(c =>
+  catEl.innerHTML = Object.keys(cats).map(c =>
     `<button class="pill-tab ${c===chordCat?'active':''}" onclick="selectChordCat('${c}',this)">${c}</button>`
   ).join('')
-  renderChordGrid(CHORD_CATS[chordCat])
+  renderChordGrid(cats[chordCat])
 }
 
 function selectChordCat(cat, btn) {
   chordCat = cat
   document.querySelectorAll('#chord-cats .pill-tab').forEach(b => b.classList.remove('active'))
   btn.classList.add('active')
-  renderChordGrid(CHORD_CATS[cat])
+  renderChordGrid(activeChordCats()[cat])
   document.getElementById('chord-search').value = ''
 }
 
 function renderChordGrid(names) {
-  document.getElementById('chord-grid').innerHTML = names.map(name =>
-    `<div class="chord-card" onclick="openChordModal('${name}')">
-      <div class="chord-card-name">${name}</div>
-      ${chordSVG(CHORD_DB[name][0])}
-    </div>`
-  ).join('')
+  const db = activeChordDB()
+  document.getElementById('chord-grid').innerHTML = names
+    .filter(name => db[name])
+    .map(name =>
+      `<div class="chord-card" onclick="openChordModal('${name}')">
+        <div class="chord-card-name">${name}</div>
+        ${chordSVG(db[name][0])}
+      </div>`
+    ).join('')
 }
 
 function searchChords(q) {
   const lq = q.toLowerCase().trim()
-  if (!lq) { renderChordGrid(CHORD_CATS[chordCat]); return }
-  renderChordGrid(Object.keys(CHORD_DB).filter(n => n.toLowerCase().includes(lq)))
+  if (!lq) { renderChordGrid(activeChordCats()[chordCat]); return }
+  renderChordGrid(Object.keys(activeChordDB()).filter(n => n.toLowerCase().includes(lq)))
 }
 
 function openChordModal(name) {
-  const variants = CHORD_DB[name]
+  const variants = activeChordDB()[name]
   document.getElementById('chord-modal-name').textContent = name
   document.getElementById('chord-variants').innerHTML = variants.map(v => `
     <div class="chord-variant">
