@@ -447,6 +447,62 @@ a{color:var(--accent)}
 .sheet-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sheet-song{font-size:11px;color:var(--muted);margin-top:2px}
 
+/* SHEET FULLVIEW */
+.sheet-fv{
+  display:none;position:fixed;inset:0;z-index:250;
+  background:var(--bg);flex-direction:column;
+}
+.sheet-fv.open{display:flex}
+.sfv-header{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.sfv-header h2{flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sfv-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.sfv-chord-bar{
+  display:flex;align-items:flex-start;gap:6px;
+  padding:10px 14px;overflow-x:auto;flex-shrink:0;
+  border-bottom:1px solid var(--border);background:var(--surface);
+  scrollbar-width:none;
+}
+.sfv-chord-bar::-webkit-scrollbar{display:none}
+.sfv-chord-bar:empty{display:none}
+.sfv-content{flex:1;overflow-y:auto;padding:20px 16px;min-height:0}
+@media (orientation:landscape){
+  .sfv-body{flex-direction:row}
+  .sfv-chord-bar{
+    flex-direction:column;overflow-y:auto;overflow-x:hidden;
+    width:76px;border-bottom:none;border-right:1px solid var(--border);
+    padding:8px 4px;flex-shrink:0;align-items:center;gap:8px;
+  }
+  .sfv-content{padding:16px 20px}
+}
+.mini-chord{
+  flex-shrink:0;cursor:default;border-radius:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:5px 3px 3px;
+}
+.mini-chord-lbl{
+  flex-shrink:0;padding:8px 10px;border-radius:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  font-size:13px;font-weight:700;color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+}
+/* Chord+lyric renderer */
+.cl-section{margin-bottom:20px}
+.cl-section-title{
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);background:var(--surface2);border-radius:4px;
+  padding:3px 8px;display:inline-block;margin-bottom:10px;
+}
+.cl-line{display:flex;flex-wrap:wrap;margin-bottom:4px;align-items:flex-end}
+.cl-seg{display:inline-flex;flex-direction:column;min-width:4px}
+.cl-chord{font-size:12px;font-weight:700;color:var(--accent);line-height:1;padding-bottom:3px;min-height:16px;white-space:nowrap}
+.cl-lyric{font-size:17px;line-height:1.6;color:var(--text);white-space:pre}
+.cl-plain{font-size:17px;line-height:1.6;color:var(--muted);margin-bottom:4px}
+.cl-empty{height:12px}
+.cl-help{font-size:11px;color:var(--muted);line-height:1.6;padding-top:4px}
+
 /* PREVIEW */
 .preview-ov{
   position:fixed;inset:0;background:rgba(0,0,0,.92);
@@ -790,8 +846,9 @@ a{color:var(--accent)}
       <select id="sheet-song-sel"><option value="">— 미분류 —</option></select>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button class="pill-tab active" id="utab-file" onclick="switchUploadTab('file')">📁 파일</button>
-      <button class="pill-tab" id="utab-url" onclick="switchUploadTab('url')">🔗 링크 URL</button>
+      <button class="pill-tab active" id="utab-file" onclick="switchUploadTab('file')">파일</button>
+      <button class="pill-tab" id="utab-url" onclick="switchUploadTab('url')">링크</button>
+      <button class="pill-tab" id="utab-cl" onclick="switchUploadTab('chord-lyric')">코드+가사</button>
     </div>
     <div id="upload-file-pane" class="form-row">
       <label>파일 (PDF, 이미지)</label>
@@ -801,6 +858,17 @@ a{color:var(--accent)}
       <label>악보 URL</label>
       <input type="url" id="sheet-url" placeholder="https://…">
       <div style="font-size:11px;color:var(--muted);margin-top:5px">이미지, PDF, 또는 외부 악보 링크를 붙여넣으세요</div>
+    </div>
+    <div id="upload-cl-pane" style="display:none">
+      <div class="form-row">
+        <label>제목</label>
+        <input type="text" id="sheet-cl-title" placeholder="예: 사랑하기 때문에 코드차트">
+      </div>
+      <div class="form-row">
+        <label>코드+가사 — [코드]가사 형식</label>
+        <textarea id="sheet-cl-text" rows="8" placeholder="# 버스 1&#10;[C]사랑했던 날들이 [G]그리워&#10;[Am]너와 함께한 [F]시간들이&#10;&#10;# 코러스&#10;[C]아 [G]아 [Am]아 [F]아" style="font-family:monospace;font-size:13px"></textarea>
+        <div class="cl-help">💡 # 으로 섹션 구분 · [코드명] 뒤에 가사</div>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-secondary" style="flex:1" onclick="closeUploadModal()">취소</button>
@@ -836,6 +904,19 @@ a{color:var(--accent)}
       <button class="btn btn-secondary" style="flex:1" onclick="discardLog()">버리기</button>
       <button class="btn btn-primary" style="flex:2" onclick="saveLog()">저장 ✓</button>
     </div>
+  </div>
+</div>
+
+<!-- SHEET FULLVIEW -->
+<div class="sheet-fv" id="sheet-fv">
+  <div class="sfv-header">
+    <button class="back-btn" onclick="closeSheetFv()">←</button>
+    <h2 id="sfv-title">악보</h2>
+    <a id="sfv-dl" href="#" target="_blank" style="font-size:12px;color:var(--muted);text-decoration:none;white-space:nowrap;flex-shrink:0">열기↗</a>
+  </div>
+  <div class="sfv-body">
+    <div class="sfv-chord-bar" id="sfv-chord-bar"></div>
+    <div class="sfv-content" id="sfv-content"></div>
   </div>
 </div>
 
@@ -1213,10 +1294,10 @@ async function loadSheets() {
   const songMap = Object.fromEntries(allSongs.map(s => [s.id, s.title]))
   const el = document.getElementById('sheets-grid')
   el.innerHTML = S.sheets.length
-    ? S.sheets.map(s => {
-        const icon = s.file_type === 'link' ? '🔗' : s.file_name.toLowerCase().endsWith('.pdf') ? '📄' : '🖼️'
+    ? S.sheets.map((s, idx) => {
+        const icon = s.file_type === 'chord-lyric' ? '🎵' : s.file_type === 'link' ? '🔗' : s.file_name.toLowerCase().endsWith('.pdf') ? '📄' : '🖼️'
         return `
-      <div class="sheet-card" onclick="previewSheet('${sb.fileUrl(s.storage_path)}','${esc(s.file_name)}')">
+      <div class="sheet-card" onclick="openSheet(${idx})">
         <div class="sheet-thumb">${icon}</div>
         <div class="sheet-meta">
           <div class="sheet-name">${esc(s.file_name)}</div>
@@ -1244,15 +1325,29 @@ function closeUploadModal() {
 let uploadTab = 'file'
 function switchUploadTab(tab) {
   uploadTab = tab
-  document.getElementById('utab-file').classList.toggle('active', tab === 'file')
-  document.getElementById('utab-url').classList.toggle('active', tab === 'url')
+  ;['file','url','chord-lyric'].forEach(t => {
+    const btn = document.getElementById('utab-' + (t === 'chord-lyric' ? 'cl' : t))
+    if (btn) btn.classList.toggle('active', t === tab)
+  })
   document.getElementById('upload-file-pane').style.display = tab === 'file' ? 'block' : 'none'
   document.getElementById('upload-url-pane').style.display = tab === 'url' ? 'block' : 'none'
+  document.getElementById('upload-cl-pane').style.display = tab === 'chord-lyric' ? 'block' : 'none'
 }
 
 async function uploadSheet() {
   const songId = document.getElementById('sheet-song-sel').value || null
-  if (uploadTab === 'url') {
+  if (uploadTab === 'chord-lyric') {
+    const text = document.getElementById('sheet-cl-text').value.trim()
+    const title = document.getElementById('sheet-cl-title').value.trim() || '코드+가사 악보'
+    if (!text) { alert('코드+가사를 입력하세요'); return }
+    const blob = new Blob([text], { type: 'text/plain' })
+    const path = `${Date.now()}_cl.txt`
+    const ok = await sb.upload(path, blob)
+    if (!ok) { alert('저장에 실패했어요'); return }
+    await sb.post('ssw_sheet_music', { song_id: songId, file_name: title, storage_path: path, file_type: 'chord-lyric' })
+    document.getElementById('sheet-cl-text').value = ''
+    document.getElementById('sheet-cl-title').value = ''
+  } else if (uploadTab === 'url') {
     const url = document.getElementById('sheet-url').value.trim()
     if (!url || !url.startsWith('http')) { alert('올바른 URL을 입력하세요'); return }
     const base = url.split('?')[0]
@@ -1271,6 +1366,131 @@ async function uploadSheet() {
     document.getElementById('sheet-file').value = ''
   }
   closeUploadModal(); loadSheets()
+}
+
+// ─── SHEET FULLVIEW ──────────────────────────────────────────────────────────
+function openSheet(idx) {
+  const sheet = S.sheets[idx]
+  if (!sheet) return
+  document.getElementById('sfv-title').textContent = sheet.file_name
+  const fv = document.getElementById('sheet-fv')
+  fv.classList.add('open')
+  document.body.style.overflow = 'hidden'
+  const chordBar = document.getElementById('sfv-chord-bar')
+  const content = document.getElementById('sfv-content')
+  const dlBtn = document.getElementById('sfv-dl')
+
+  if (sheet.file_type === 'chord-lyric') {
+    dlBtn.style.display = 'none'
+    chordBar.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:4px">불러오는 중…</div>'
+    content.innerHTML = ''
+    fetch(sb.fileUrl(sheet.storage_path))
+      .then(r => r.text())
+      .then(text => {
+        const chords = extractChords(text)
+        renderChordBar(chords)
+        content.innerHTML = renderChordLyric(text)
+      })
+      .catch(() => { content.innerHTML = '<div class="empty">불러오기 실패</div>'; chordBar.innerHTML = '' })
+  } else {
+    chordBar.innerHTML = ''
+    const url = sb.fileUrl(sheet.storage_path)
+    dlBtn.href = url; dlBtn.style.display = ''
+    const ext = url.split('?')[0].split('.').pop().toLowerCase()
+    const isImg = ['jpg','jpeg','png','gif','webp','svg'].includes(ext)
+    content.innerHTML = isImg
+      ? `<img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto">`
+      : `<iframe src="${url}" style="width:100%;height:100%;border:none;min-height:80vh"></iframe>`
+  }
+}
+
+function closeSheetFv() {
+  document.getElementById('sheet-fv').classList.remove('open')
+  document.body.style.overflow = ''
+  document.getElementById('sfv-content').innerHTML = ''
+  document.getElementById('sfv-chord-bar').innerHTML = ''
+}
+
+function extractChords(text) {
+  const seen = new Set(), result = []
+  for (const m of text.matchAll(/\[([^\]]+)\]/g)) {
+    if (!seen.has(m[1])) { seen.add(m[1]); result.push(m[1]) }
+  }
+  return result
+}
+
+function renderChordBar(chords) {
+  const bar = document.getElementById('sfv-chord-bar')
+  bar.innerHTML = chords.map(name => miniChordEl(name)).join('')
+}
+
+function miniChordEl(name) {
+  const shapes = CHORD_DB[name]
+  if (!shapes || !shapes.length) return `<div class="mini-chord-lbl">${name}</div>`
+  const sh = shapes[0], frets = sh.frets, sf = sh.startFret || 1
+  const NS = 6, NF = 4
+  const W = 54, H = 70, ML = 9, MT = 18
+  const ss = (W - ML*2) / (NS-1), fs = (H - MT - 7) / NF
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
+  s += `<text x="${W/2}" y="13" text-anchor="middle" fill="var(--text)" font-size="10" font-weight="700">${name}</text>`
+  if (sf <= 1) {
+    s += `<rect x="${ML}" y="${MT-1.5}" width="${W-ML*2}" height="3" fill="var(--text)" opacity="0.7" rx="1"/>`
+  } else {
+    s += `<text x="${W-ML+3}" y="${MT+fs*0.55}" fill="var(--muted)" font-size="7">${sf}fr</text>`
+    s += `<line x1="${ML}" y1="${MT}" x2="${W-ML}" y2="${MT}" stroke="var(--border)" stroke-width="1"/>`
+  }
+  for (let f = 1; f <= NF; f++)
+    s += `<line x1="${ML}" y1="${MT+f*fs}" x2="${W-ML}" y2="${MT+f*fs}" stroke="var(--border)" stroke-width="0.6" opacity="0.4"/>`
+  for (let i = 0; i < NS; i++)
+    s += `<line x1="${ML+i*ss}" y1="${MT}" x2="${ML+i*ss}" y2="${MT+NF*fs}" stroke="var(--border)" stroke-width="0.7" opacity="0.5"/>`
+  if (sh.barre) {
+    const { fret, from, to } = sh.barre, fp = fret - sf + 0.5
+    const x1 = ML + from*ss, x2 = ML + to*ss, y = MT + fp*fs
+    s += `<rect x="${x1}" y="${y-fs*0.3}" width="${x2-x1}" height="${fs*0.6}" fill="var(--accent)" rx="${fs*0.3}" opacity="0.9"/>`
+  }
+  for (let i = 0; i < NS; i++) {
+    const x = ML + i*ss, f = frets[i]
+    if (f === -1) s += `<text x="${x}" y="${MT-3}" text-anchor="middle" fill="var(--muted)" font-size="8">×</text>`
+    else if (f === 0) s += `<circle cx="${x}" cy="${MT-5}" r="3.5" fill="none" stroke="var(--muted)" stroke-width="1"/>`
+    else {
+      const fp = f - sf + 0.5, y = MT + fp*fs
+      if (!sh.barre || f !== sh.barre.fret || i < sh.barre.from || i > sh.barre.to)
+        s += `<circle cx="${x}" cy="${y}" r="${fs*0.28}" fill="var(--accent)"/>`
+    }
+  }
+  return `<div class="mini-chord" title="${name}">${s}</svg></div>`
+}
+
+function renderChordLyric(text) {
+  const lines = text.split('\n')
+  let html = '', secOpen = false
+  const flush = () => { if (secOpen) { html += '</div>'; secOpen = false } }
+  const open = () => { if (!secOpen) { html += '<div class="cl-section">'; secOpen = true } }
+  for (const raw of lines) {
+    const line = raw.trimEnd(), t = line.trim()
+    if (t.startsWith('#') || /^\[(버스|코러스|브릿지|verse|chorus|bridge|intro|outro)[^\]]*\]$/i.test(t)) {
+      flush()
+      const title = t.startsWith('#') ? t.slice(1).trim() : t.slice(1,-1)
+      html += `<div class="cl-section"><div class="cl-section-title">${esc(title)}</div>`
+      secOpen = true; continue
+    }
+    if (!t) { html += '<div class="cl-empty"></div>'; continue }
+    if (/\[[^\]]+\]/.test(t)) {
+      open()
+      html += '<div class="cl-line">'
+      const fi = t.indexOf('[')
+      if (fi > 0) html += `<div class="cl-seg"><div class="cl-chord"></div><div class="cl-lyric">${esc(t.slice(0,fi))}</div></div>`
+      for (const m of t.matchAll(/\[([^\]]+)\]([^\[]*)/g)) {
+        html += `<div class="cl-seg"><div class="cl-chord">${esc(m[1])}</div><div class="cl-lyric">${m[2] ? esc(m[2]) : '​'}</div></div>`
+      }
+      html += '</div>'
+    } else {
+      open()
+      html += `<div class="cl-plain">${esc(t)}</div>`
+    }
+  }
+  flush()
+  return html || '<div class="empty">내용 없음</div>'
 }
 
 function previewSheet(url, name) {
