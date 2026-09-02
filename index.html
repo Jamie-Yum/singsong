@@ -505,6 +505,21 @@ a{color:var(--accent)}
 .cl-lyric{font-size:17px;line-height:1.6;color:var(--text);white-space:pre}
 .cl-plain{font-size:17px;line-height:1.6;color:var(--muted);margin-bottom:4px}
 .cl-empty{height:12px}
+
+/* PRESENTATION MODE */
+#pres-ov{display:none;position:fixed;inset:0;z-index:350;background:#000;align-items:center;justify-content:center}
+#pres-box{
+  width:min(100vw,calc(100vh * 16 / 9));
+  height:min(100vh,calc(100vw * 9 / 16));
+  background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative;
+}
+.pres-hd{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.pres-hd h3{flex:1;font-size:14px;font-weight:700;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pres-chord-bar{display:flex;align-items:flex-start;gap:5px;padding:6px 14px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);scrollbar-width:none}
+.pres-chord-bar:empty{display:none}
+.pres-chord-bar::-webkit-scrollbar{display:none}
+.pres-wrap{flex:1;overflow:hidden;min-height:0;position:relative}
+#pres-content{transform-origin:top left;padding:14px 24px;position:absolute;top:0;left:0}
 .cl-help{font-size:11px;color:var(--muted);line-height:1.6;padding-top:4px}
 
 /* PREVIEW */
@@ -937,11 +952,26 @@ a{color:var(--accent)}
   <div class="sfv-header">
     <button class="back-btn" onclick="closeSheetFv()">←</button>
     <h2 id="sfv-title">악보</h2>
+    <button id="sfv-pres-btn" onclick="openPresMode()" style="display:none;font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text);white-space:nowrap;flex-shrink:0">⊞ 한 화면</button>
     <a id="sfv-dl" href="#" target="_blank" style="font-size:12px;color:var(--muted);text-decoration:none;white-space:nowrap;flex-shrink:0">열기↗</a>
   </div>
   <div class="sfv-body">
     <div class="sfv-chord-bar" id="sfv-chord-bar"></div>
     <div class="sfv-content" id="sfv-content"></div>
+  </div>
+</div>
+
+<!-- PRESENTATION MODE -->
+<div id="pres-ov">
+  <div id="pres-box">
+    <div class="pres-hd">
+      <h3 id="pres-title"></h3>
+      <button onclick="closePres()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);padding:2px 4px">✕</button>
+    </div>
+    <div class="pres-chord-bar" id="pres-chord-bar"></div>
+    <div class="pres-wrap" id="pres-wrap">
+      <div id="pres-content"></div>
+    </div>
   </div>
 </div>
 
@@ -1431,6 +1461,8 @@ function openSheet(idx) {
   const dlBtn = document.getElementById('sfv-dl')
 
   const manualChords = sheet.key_chords ? sheet.key_chords.trim().split(/\s+/).filter(Boolean) : []
+  const presBtn = document.getElementById('sfv-pres-btn')
+  presBtn.style.display = 'none'
   if (sheet.file_type === 'chord-lyric') {
     dlBtn.style.display = 'none'
     chordBar.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:4px">불러오는 중…</div>'
@@ -1438,8 +1470,12 @@ function openSheet(idx) {
     fetch(sb.fileUrl(sheet.storage_path))
       .then(r => r.text())
       .then(text => {
-        renderChordBar(manualChords.length ? manualChords : extractChords(text))
+        const chords = manualChords.length ? manualChords : extractChords(text)
+        renderChordBar(chords)
         content.innerHTML = renderChordLyric(text)
+        presText = text; presChords = chords
+        presTitle = sheet.file_name
+        presBtn.style.display = ''
       })
       .catch(() => { content.innerHTML = '<div class="empty">불러오기 실패</div>'; chordBar.innerHTML = '' })
   } else {
@@ -1459,6 +1495,31 @@ function closeSheetFv() {
   document.body.style.overflow = ''
   document.getElementById('sfv-content').innerHTML = ''
   document.getElementById('sfv-chord-bar').innerHTML = ''
+  document.getElementById('sfv-pres-btn').style.display = 'none'
+}
+
+let presText = '', presChords = [], presTitle = ''
+function openPresMode() {
+  const ov = document.getElementById('pres-ov')
+  ov.style.display = 'flex'
+  document.getElementById('pres-title').textContent = presTitle
+  document.getElementById('pres-chord-bar').innerHTML = presChords.map(name => miniChordEl(name)).join('')
+  const inner = document.getElementById('pres-content')
+  inner.style.cssText = 'transform:none;width:auto;padding:14px 24px;position:absolute;top:0;left:0'
+  inner.innerHTML = renderChordLyric(presText)
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const wrap = document.getElementById('pres-wrap')
+    const wH = wrap.clientHeight, wW = wrap.clientWidth
+    const cH = inner.scrollHeight, cW = inner.scrollWidth
+    const scale = Math.min(wH / cH, wW / cW, 1)
+    if (scale < 1) {
+      inner.style.width = Math.round(wW / scale) + 'px'
+      inner.style.transform = `scale(${scale})`
+    }
+  }))
+}
+function closePres() {
+  document.getElementById('pres-ov').style.display = 'none'
 }
 
 function extractChords(text) {
