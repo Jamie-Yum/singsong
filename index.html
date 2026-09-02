@@ -2173,15 +2173,20 @@ const CHORD_CATS = {
   '슬래시': ['G/B','D/F#','C/E','A/C#','E/G#','Am/G','Am/E'],
   '파워':   ['E5','A5','D5','G5','B5','F5','C5'],
 }
-let chordCat = '메이저'
+let chordCat = '전체'
 let chordInstrument = 'guitar'
 function activeChordDB() { return chordInstrument === 'guitar' ? CHORD_DB : UKE_CHORD_DB }
 function activeChordCats() { return chordInstrument === 'guitar' ? CHORD_CATS : UKE_CHORD_CATS }
+function getAllChordNames() {
+  const db = activeChordDB()
+  const seen = new Set()
+  return Object.values(activeChordCats()).flat().filter(n => db[n] && !seen.has(n) && seen.add(n))
+}
 function switchChordInstrument(inst) {
   chordInstrument = inst
   document.getElementById('chord-inst-guitar').classList.toggle('active', inst === 'guitar')
   document.getElementById('chord-inst-ukulele').classList.toggle('active', inst === 'ukulele')
-  chordCat = '메이저'
+  chordCat = '전체'
   document.getElementById('chord-search').value = ''
   loadChordsView()
 }
@@ -2237,19 +2242,21 @@ function chordSVG(chord) {
 
 function loadChordsView() {
   const cats = activeChordCats()
-  if (!Object.keys(cats).includes(chordCat)) chordCat = '메이저'
+  if (chordCat !== '전체' && !Object.keys(cats).includes(chordCat)) chordCat = '전체'
   const catEl = document.getElementById('chord-cats')
-  catEl.innerHTML = Object.keys(cats).map(c =>
-    `<button class="pill-tab ${c===chordCat?'active':''}" onclick="selectChordCat('${c}',this)">${c}</button>`
-  ).join('')
-  renderChordGrid(cats[chordCat])
+  catEl.innerHTML =
+    `<button class="pill-tab ${'전체'===chordCat?'active':''}" onclick="selectChordCat('전체',this)">전체</button>` +
+    Object.keys(cats).map(c =>
+      `<button class="pill-tab ${c===chordCat?'active':''}" onclick="selectChordCat('${c}',this)">${c}</button>`
+    ).join('')
+  renderChordGrid(chordCat === '전체' ? getAllChordNames() : cats[chordCat])
 }
 
 function selectChordCat(cat, btn) {
   chordCat = cat
   document.querySelectorAll('#chord-cats .pill-tab').forEach(b => b.classList.remove('active'))
   btn.classList.add('active')
-  renderChordGrid(activeChordCats()[cat])
+  renderChordGrid(cat === '전체' ? getAllChordNames() : activeChordCats()[cat])
   document.getElementById('chord-search').value = ''
 }
 
@@ -2267,7 +2274,7 @@ function renderChordGrid(names) {
 
 function searchChords(q) {
   const lq = q.toLowerCase().trim()
-  if (!lq) { renderChordGrid(activeChordCats()[chordCat]); return }
+  if (!lq) { renderChordGrid(chordCat === '전체' ? getAllChordNames() : activeChordCats()[chordCat]); return }
   renderChordGrid(Object.keys(activeChordDB()).filter(n => n.toLowerCase().includes(lq)))
 }
 
