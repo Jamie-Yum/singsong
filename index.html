@@ -1828,12 +1828,14 @@ const CHORD_DB = {
   'Am': [
     { label:'오픈',            frets:[-1,0,2,2,1,0], fingers:[0,0,2,3,1,0] },
     { label:'Em형 바레 5fr',   frets:[5,7,7,5,5,5], startFret:5, fingers:[1,3,4,1,1,1], barre:{fret:5,from:0,to:5} },
+    { label:'D형 변형 7fr',    frets:[-1,-1,7,9,10,8], startFret:7, fingers:[0,0,1,3,4,2] },
     { label:'Am형 바레 12fr',  frets:[-1,12,14,14,13,12], startFret:12, fingers:[0,1,3,4,2,1], barre:{fret:12,from:1,to:5} },
   ],
   'Bm': [
     { label:'Am형 바레 2fr',   frets:[-1,2,4,4,3,2], startFret:2, fingers:[0,1,3,4,2,1], barre:{fret:2,from:1,to:5} },
     { label:'간소화 2fr',      frets:[-1,2,4,4,3,-1], startFret:2, fingers:[0,1,3,4,2,0] },
     { label:'Em형 바레 7fr',   frets:[7,9,9,7,7,7], startFret:7, fingers:[1,3,4,1,1,1], barre:{fret:7,from:0,to:5} },
+    { label:'D형 변형 9fr',    frets:[-1,-1,9,11,12,10], startFret:9, fingers:[0,0,1,3,4,2] },
   ],
   'Cm': [
     { label:'Am형 바레 3fr',   frets:[-1,3,5,5,4,3], startFret:3, fingers:[0,1,3,4,2,1], barre:{fret:3,from:1,to:5} },
@@ -1854,11 +1856,13 @@ const CHORD_DB = {
   'Fm': [
     { label:'Em형 바레 1fr',   frets:[1,3,3,1,1,1], fingers:[1,3,4,1,1,1], barre:{fret:1,from:0,to:5} },
     { label:'Am형 바레 8fr',   frets:[-1,8,10,10,9,8], startFret:8, fingers:[0,1,3,4,2,1], barre:{fret:8,from:1,to:5} },
-    { label:'Em형 바레 8fr',   frets:[8,10,10,8,8,8], startFret:8, fingers:[1,3,4,1,1,1], barre:{fret:8,from:0,to:5} },
+    { label:'D형 변형 3fr',    frets:[-1,-1,3,5,6,4], startFret:3, fingers:[0,0,1,3,4,2] },
+    { label:'Em형 바레 13fr',  frets:[13,15,15,13,13,13], startFret:13, fingers:[1,3,4,1,1,1], barre:{fret:13,from:0,to:5} },
   ],
   'Gm': [
     { label:'오픈',            frets:[3,1,0,0,3,3], fingers:[3,1,0,0,4,4] },
     { label:'Em형 바레 3fr',   frets:[3,5,5,3,3,3], startFret:3, fingers:[1,3,4,1,1,1], barre:{fret:3,from:0,to:5} },
+    { label:'D형 변형 5fr',    frets:[-1,-1,5,7,8,6], startFret:5, fingers:[0,0,1,3,4,2] },
     { label:'Am형 바레 10fr',  frets:[-1,10,12,12,11,10], startFret:10, fingers:[0,1,3,4,2,1], barre:{fret:10,from:1,to:5} },
   ],
   'A7': [
@@ -2072,6 +2076,48 @@ const CHORD_DB = {
     { label:'3fr',    frets:[-1,3,5,5,-1,-1], startFret:3, fingers:[0,1,3,4,0,0] },
     { label:'8fr',    frets:[8,10,10,-1,-1,-1], startFret:8, fingers:[1,3,4,0,0,0] },
   ],
+  // ─── 플랫/샵 메이저 ───
+  'Bb': [
+    { label:'Am형 바레 1fr',   frets:[-1,1,3,3,3,1], startFret:1, fingers:[0,1,3,3,3,1], barre:{fret:1,from:1,to:5} },
+    { label:'Em형 바레 6fr',   frets:[6,8,8,7,6,6], startFret:6, fingers:[1,3,4,2,1,1], barre:{fret:6,from:0,to:5} },
+    { label:'D형 변형 8fr',    frets:[-1,-1,8,10,11,9], startFret:8, fingers:[0,0,1,3,4,2] },
+  ],
+  'F#': [
+    { label:'Em형 바레 2fr',   frets:[2,4,4,3,2,2], startFret:2, fingers:[1,3,4,2,1,1], barre:{fret:2,from:0,to:5} },
+    { label:'Am형 바레 9fr',   frets:[-1,9,11,11,11,9], startFret:9, fingers:[0,1,3,4,3,1], barre:{fret:9,from:1,to:5} },
+    { label:'D형 변형 4fr',    frets:[-1,-1,4,6,7,5], startFret:4, fingers:[0,0,1,3,4,2] },
+  ],
+  'Eb': [
+    { label:'Am형 바레 6fr',   frets:[-1,6,8,8,8,6], startFret:6, fingers:[0,1,3,4,3,1], barre:{fret:6,from:1,to:5} },
+    { label:'Em형 바레 11fr',  frets:[11,13,13,12,11,11], startFret:11, fingers:[1,3,4,2,1,1], barre:{fret:11,from:0,to:5} },
+    { label:'D형 변형 1fr',    frets:[-1,-1,1,3,4,2], startFret:1, fingers:[0,0,1,3,4,2] },
+  ],
+  'Ab': [
+    { label:'Em형 바레 4fr',   frets:[4,6,6,5,4,4], startFret:4, fingers:[1,3,4,2,1,1], barre:{fret:4,from:0,to:5} },
+    { label:'Am형 바레 11fr',  frets:[-1,11,13,13,13,11], startFret:11, fingers:[0,1,3,4,3,1], barre:{fret:11,from:1,to:5} },
+    { label:'D형 변형 6fr',    frets:[-1,-1,6,8,9,7], startFret:6, fingers:[0,0,1,3,4,2] },
+  ],
+  // ─── 플랫/샵 마이너 ───
+  'Bbm': [
+    { label:'Am형 바레 1fr',   frets:[-1,1,3,3,2,1], startFret:1, fingers:[0,1,3,4,2,1], barre:{fret:1,from:1,to:5} },
+    { label:'Em형 바레 6fr',   frets:[6,8,8,6,6,6], startFret:6, fingers:[1,3,4,1,1,1], barre:{fret:6,from:0,to:5} },
+    { label:'D형 변형 8fr',    frets:[-1,-1,8,10,11,9], startFret:8, fingers:[0,0,1,3,4,2] },
+  ],
+  'F#m': [
+    { label:'Em형 바레 2fr',   frets:[2,4,4,2,2,2], startFret:2, fingers:[1,3,4,1,1,1], barre:{fret:2,from:0,to:5} },
+    { label:'Am형 바레 9fr',   frets:[-1,9,11,11,10,9], startFret:9, fingers:[0,1,3,4,2,1], barre:{fret:9,from:1,to:5} },
+    { label:'D형 변형 4fr',    frets:[-1,-1,4,6,7,5], startFret:4, fingers:[0,0,1,3,4,2] },
+  ],
+  'Ebm': [
+    { label:'Am형 바레 6fr',   frets:[-1,6,8,8,7,6], startFret:6, fingers:[0,1,3,4,2,1], barre:{fret:6,from:1,to:5} },
+    { label:'Em형 바레 11fr',  frets:[11,13,13,11,11,11], startFret:11, fingers:[1,3,4,1,1,1], barre:{fret:11,from:0,to:5} },
+    { label:'D형 변형 1fr',    frets:[-1,-1,1,3,4,2], startFret:1, fingers:[0,0,1,3,4,2] },
+  ],
+  'G#m': [
+    { label:'Em형 바레 4fr',   frets:[4,6,6,4,4,4], startFret:4, fingers:[1,3,4,1,1,1], barre:{fret:4,from:0,to:5} },
+    { label:'Am형 바레 11fr',  frets:[-1,11,13,13,12,11], startFret:11, fingers:[0,1,3,4,2,1], barre:{fret:11,from:1,to:5} },
+    { label:'D형 변형 6fr',    frets:[-1,-1,6,8,9,7], startFret:6, fingers:[0,0,1,3,4,2] },
+  ],
 }
 const UKE_CHORD_DB = {
   'C':     [{ label:'오픈', frets:[0,0,0,3], fingers:[0,0,0,3] }],
@@ -2116,8 +2162,8 @@ const UKE_CHORD_CATS = {
   '기타':   ['Cadd9','Dsus2','Gsus4','Asus2','Cdim','Gdim'],
 }
 const CHORD_CATS = {
-  '메이저': ['C','D','E','F','G','A','B'],
-  '마이너': ['Am','Bm','Cm','Dm','Em','Fm','Gm'],
+  '메이저': ['C','D','E','F','F#','G','Ab','A','Bb','B','Eb'],
+  '마이너': ['Am','Bbm','Bm','Cm','Dm','Ebm','Em','Fm','F#m','Gm','G#m'],
   '7th':    ['A7','B7','C7','D7','E7','G7','Am7','Dm7','Em7'],
   'Sus4':   ['Dsus4','Asus4','Esus4','Gsus4'],
   '9th':    ['E9','A9','D9','G9','C9'],
