@@ -522,6 +522,16 @@ a{color:var(--accent)}
 #pres-content{height:100%;padding:12px 24px;column-fill:auto;column-gap:28px;box-sizing:border-box}
 #pres-content .cl-section{break-inside:avoid}
 .cl-help{font-size:11px;color:var(--muted);line-height:1.6;padding-top:4px}
+.cl-chord-picker{background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-top:6px;overflow:hidden}
+.cl-picker-tabs{display:flex;gap:4px;padding:7px 10px 6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
+.cl-picker-tabs::-webkit-scrollbar{display:none}
+.cl-ptab{font-size:11px;padding:3px 8px;border-radius:6px;background:transparent;color:var(--muted);white-space:nowrap;font-weight:500}
+.cl-ptab.active{background:var(--accent);color:#fff}
+.cl-picker-chords{display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;min-height:38px}
+.cl-chord-btn{font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);white-space:nowrap;transition:background .1s,color .1s}
+.cl-chord-btn:active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cl-picker-actions{display:flex;gap:6px;padding:0 10px 8px}
+.cl-action-btn{font-size:11px;padding:4px 10px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);color:var(--muted);white-space:nowrap}
 
 /* PREVIEW */
 .preview-ov{
@@ -903,8 +913,16 @@ a{color:var(--accent)}
       </div>
       <div class="form-row">
         <label>코드+가사 — [코드]가사 형식</label>
-        <textarea id="sheet-cl-text" rows="8" placeholder="# 버스 1&#10;[C]사랑했던 날들이 [G]그리워&#10;[Am]너와 함께한 [F]시간들이&#10;&#10;# 코러스&#10;[C]아 [G]아 [Am]아 [F]아" style="font-family:monospace;font-size:13px"></textarea>
-        <div class="cl-help">💡 # 으로 섹션 구분 · [코드명] 뒤에 가사</div>
+        <textarea id="sheet-cl-text" rows="7" placeholder="# 버스 1&#10;[C]사랑했던 날들이 [G]그리워&#10;[Am]너와 함께한 [F]시간들이&#10;&#10;# 코러스&#10;[C]아 [G]아 [Am]아 [F]아" style="font-family:monospace;font-size:13px"></textarea>
+        <div class="cl-chord-picker">
+          <div class="cl-picker-tabs" id="cl-picker-tabs"></div>
+          <div class="cl-picker-chords" id="cl-picker-chords"></div>
+          <div class="cl-picker-actions">
+            <button class="cl-action-btn" onclick="insertSectionAtCursor()"># 섹션</button>
+            <button class="cl-action-btn" onclick="insertNewlineAtCursor()">↵ 줄바꿈</button>
+          </div>
+        </div>
+        <div class="cl-help">💡 코드 버튼 탭 → 커서 위치에 [코드] 삽입 · # 으로 섹션 구분</div>
       </div>
     </div>
     <div class="form-row" style="margin-top:4px">
@@ -1412,6 +1430,51 @@ function switchUploadTab(tab) {
   document.getElementById('upload-file-pane').style.display = tab === 'file' ? 'block' : 'none'
   document.getElementById('upload-url-pane').style.display = tab === 'url' ? 'block' : 'none'
   document.getElementById('upload-cl-pane').style.display = tab === 'chord-lyric' ? 'block' : 'none'
+  if (tab === 'chord-lyric') initChordPicker()
+}
+
+let _pickerCat = '메이저'
+function initChordPicker() {
+  const cats = Object.keys(CHORD_CATS)
+  document.getElementById('cl-picker-tabs').innerHTML = cats.map(c =>
+    `<button class="cl-ptab ${c===_pickerCat?'active':''}" onclick="switchPickerCat('${c}',this)">${c}</button>`
+  ).join('')
+  renderPickerChords()
+}
+function switchPickerCat(cat, btn) {
+  _pickerCat = cat
+  document.querySelectorAll('#cl-picker-tabs .cl-ptab').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  renderPickerChords()
+}
+function renderPickerChords() {
+  document.getElementById('cl-picker-chords').innerHTML = (CHORD_CATS[_pickerCat]||[]).map(n =>
+    `<button class="cl-chord-btn" ontouchstart="" onclick="insertChordAtCursor('${n}')">${n}</button>`
+  ).join('')
+}
+function insertChordAtCursor(name) {
+  const ta = document.getElementById('sheet-cl-text')
+  const s = ta.selectionStart, e = ta.selectionEnd
+  const ins = `[${name}]`
+  ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e)
+  ta.selectionStart = ta.selectionEnd = s + ins.length
+  ta.focus()
+}
+function insertSectionAtCursor() {
+  const ta = document.getElementById('sheet-cl-text')
+  const s = ta.selectionStart
+  const prefix = s > 0 && ta.value[s-1] !== '\n' ? '\n' : ''
+  const ins = prefix + '# '
+  ta.value = ta.value.slice(0, s) + ins + ta.value.slice(s)
+  ta.selectionStart = ta.selectionEnd = s + ins.length
+  ta.focus()
+}
+function insertNewlineAtCursor() {
+  const ta = document.getElementById('sheet-cl-text')
+  const s = ta.selectionStart
+  ta.value = ta.value.slice(0, s) + '\n' + ta.value.slice(s)
+  ta.selectionStart = ta.selectionEnd = s + 1
+  ta.focus()
 }
 
 async function uploadSheet() {
