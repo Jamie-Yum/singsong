@@ -578,6 +578,15 @@ a{color:var(--accent)}
 }
 .fab.hidden{display:none}
 
+/* AUTH SCREEN */
+#auth-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+.auth-box{width:100%;max-width:340px}
+.auth-logo{font-family:Georgia,serif;font-style:italic;font-size:26px;text-align:center;margin-bottom:6px;color:var(--text)}
+.auth-sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:32px}
+.auth-err{display:none;color:#e05;font-size:12px;text-align:center;margin-bottom:10px;padding:8px;background:rgba(238,0,85,.08);border-radius:8px}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:11px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.user-chip{font-size:11px;color:var(--muted);padding:3px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;cursor:pointer}
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;line-height:1.6}
 .divider{height:1px;background:var(--border);margin:4px 16px 12px}
 
@@ -598,12 +607,29 @@ a{color:var(--accent)}
 }
 </style>
 
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">Singer Songwriter</div>
+    <div class="auth-sub">나만의 음악 연습 공간</div>
+    <div class="auth-err" id="auth-err"></div>
+    <div class="form-row"><label>이메일</label><input type="email" id="auth-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="form-row"><label>비밀번호</label><input type="password" id="auth-pw" placeholder="비밀번호 (6자 이상)" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:4px" id="auth-login-btn" onclick="doLogin()">로그인</button>
+    <div class="auth-divider">또는</div>
+    <button class="btn btn-secondary" style="width:100%" id="auth-signup-btn" onclick="doSignUp()">처음이에요 → 회원가입</button>
+  </div>
+</div>
+
 <div id="main">
 
 <!-- HOME -->
 <div class="view active" id="view-home">
   <div class="home-hero">
     <div class="home-strings" id="home-strings"></div>
+    <div style="position:absolute;top:14px;right:14px">
+      <button class="user-chip" id="user-chip" onclick="doLogout()" title="로그아웃"></button>
+    </div>
     <div class="home-title-eyebrow">Practice Journal</div>
     <div class="home-title">I'm a<br><em>Singer Songwriter</em></div>
     <div class="home-sub">당신의 음악 여정을 기록하세요</div>
@@ -1009,13 +1035,19 @@ a{color:var(--accent)}
 const SB_URL = 'https://dvlrzbckneucpvlacdll.supabase.co'
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2bHJ6YmNrbmV1Y3B2bGFjZGxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODE0OTUsImV4cCI6MjA5MDU1NzQ5NX0.ofzGfyjndiT-FAIcG9TCFtUSXsagTBYOnhsP91vx0sE'
 const BUCKET = 'ssw-sheets'
-const SB_HDR = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }
+// ─── AUTH STATE ──────────────────────────────────────────────────────────────
+const AUTH_URL = `${SB_URL}/auth/v1`
+let currentUser = null
+let authToken = null
+function getHdr(extra) {
+  return { 'apikey': SB_KEY, 'Authorization': `Bearer ${authToken || SB_KEY}`, 'Content-Type': 'application/json', ...extra }
+}
 
 // ─── SUPABASE ────────────────────────────────────────────────────────────────
 const sb = {
   async get(table, qs = '') {
     try {
-      const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}&order=created_at.desc`, { headers: SB_HDR })
+      const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}&order=created_at.desc`, { headers: getHdr() })
       return r.ok ? r.json() : []
     } catch { return [] }
   },
@@ -1023,7 +1055,7 @@ const sb = {
     try {
       const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
         method: 'POST', body: JSON.stringify(data),
-        headers: { ...SB_HDR, 'Prefer': 'return=representation' }
+        headers: getHdr({ 'Prefer': 'return=representation' })
       })
       return r.ok ? r.json() : null
     } catch { return null }
@@ -1032,19 +1064,19 @@ const sb = {
     try {
       const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {
         method: 'PATCH', body: JSON.stringify(data),
-        headers: { ...SB_HDR, 'Prefer': 'return=representation' }
+        headers: getHdr({ 'Prefer': 'return=representation' })
       })
       return r.ok ? r.json() : null
     } catch { return null }
   },
   async del(table, id) {
-    try { await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method: 'DELETE', headers: SB_HDR }) } catch {}
+    try { await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method: 'DELETE', headers: getHdr() }) } catch {}
   },
   async upload(path, file) {
     try {
       const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${path}`, {
         method: 'POST', body: file,
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': file.type || 'application/octet-stream' }
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${authToken || SB_KEY}`, 'Content-Type': file.type || 'application/octet-stream' }
       })
       return r.ok
     } catch { return false }
@@ -1054,6 +1086,88 @@ const sb = {
     return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`
   }
 }
+
+// ─── AUTH FUNCTIONS ──────────────────────────────────────────────────────────
+function saveSession(data) {
+  authToken = data.access_token
+  currentUser = { id: data.user.id, email: data.user.email }
+  localStorage.setItem('ssw_session', JSON.stringify({ token: authToken, refresh: data.refresh_token, user: currentUser }))
+}
+function restoreSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('ssw_session') || 'null')
+    if (s?.token && s?.user) { authToken = s.token; currentUser = s.user; return s.refresh || null }
+  } catch {}
+  return null
+}
+function clearSession() { authToken = null; currentUser = null; localStorage.removeItem('ssw_session') }
+function isExpired() {
+  if (!authToken) return true
+  try { return JSON.parse(atob(authToken.split('.')[1])).exp * 1000 < Date.now() + 60000 } catch { return true }
+}
+async function tryRefresh(rt) {
+  try {
+    const r = await fetch(`${AUTH_URL}/token?grant_type=refresh_token`, {
+      method: 'POST', headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: rt })
+    }).then(r => r.json())
+    if (r?.access_token) { saveSession(r); return true }
+  } catch {}
+  return false
+}
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none'
+  const chip = document.getElementById('user-chip')
+  if (chip) chip.textContent = (currentUser?.email || '').split('@')[0] + ' ↗'
+}
+async function doLogin() {
+  const email = document.getElementById('auth-email').value.trim()
+  const pw = document.getElementById('auth-pw').value
+  if (!email || !pw) return
+  setAuthBusy(true)
+  try {
+    const r = await fetch(`${AUTH_URL}/token?grant_type=password`, {
+      method: 'POST', headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw })
+    }).then(r => r.json())
+    if (r?.access_token) { saveSession(r); showApp() }
+    else showAuthErr(r?.error_description || '이메일 또는 비밀번호가 틀렸어요')
+  } catch { showAuthErr('네트워크 오류가 발생했어요') }
+  setAuthBusy(false)
+}
+async function doSignUp() {
+  const email = document.getElementById('auth-email').value.trim()
+  const pw = document.getElementById('auth-pw').value
+  if (!email || !pw) return
+  if (pw.length < 6) { showAuthErr('비밀번호는 6자 이상이어야 해요'); return }
+  setAuthBusy(true)
+  try {
+    const r = await fetch(`${AUTH_URL}/signup`, {
+      method: 'POST', headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw })
+    }).then(r => r.json())
+    if (r?.access_token) { saveSession(r); showApp() }
+    else showAuthErr(r?.error_description || '회원가입 중 문제가 생겼어요')
+  } catch { showAuthErr('네트워크 오류가 발생했어요') }
+  setAuthBusy(false)
+}
+async function doLogout() {
+  if (confirm('로그아웃 할까요?')) {
+    try { await fetch(`${AUTH_URL}/logout`, { method: 'POST', headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${authToken}` } }) } catch {}
+    clearSession(); location.reload()
+  }
+}
+function showAuthErr(msg) { const el = document.getElementById('auth-err'); if (el) { el.textContent = msg; el.style.display = 'block' } }
+function setAuthBusy(on) { ['auth-login-btn','auth-signup-btn'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = on }) }
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const refresh = restoreSession()
+  if (currentUser) {
+    if (isExpired() && refresh) { const ok = await tryRefresh(refresh); if (!ok) { clearSession(); return } }
+    else if (isExpired()) { clearSession(); return }
+    showApp()
+  }
+})
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let S = {
@@ -1188,6 +1302,7 @@ async function saveLog() {
   const learned = document.getElementById('log-learned').value.trim()
   if (practiced || learned) {
     await sb.post('ssw_practice_logs', {
+      user_id: currentUser?.id,
       song_id: S.selSong?.id || null,
       duration_seconds: S.secs,
       what_practiced: practiced || null,
@@ -1277,7 +1392,7 @@ async function addGoal() {
   const songId = document.getElementById('goal-song-sel').value
   const text = document.getElementById('new-goal-text').value.trim()
   if (!songId || !text) return
-  await sb.post('ssw_goals', { song_id: songId, goal_text: text })
+  await sb.post('ssw_goals', { user_id: currentUser?.id, song_id: songId, goal_text: text })
   document.getElementById('new-goal-text').value = ''
   loadGoalsForSong(songId)
 }
@@ -1354,6 +1469,7 @@ async function saveSong() {
   const title = document.getElementById('sng-title').value.trim()
   if (!title) { alert('제목을 입력하세요'); return }
   const data = {
+    user_id: currentUser?.id,
     title,
     artist: document.getElementById('sng-artist').value.trim() || null,
     chord_url: document.getElementById('sng-chord').value.trim() || null,
@@ -1374,6 +1490,7 @@ async function saveVision() {
   const title = document.getElementById('vis-title').value.trim()
   if (!title) { alert('내용을 입력하세요'); return }
   await sb.post('ssw_wishlist', {
+    user_id: currentUser?.id,
     category: document.getElementById('vis-cat').value,
     title,
     notes: document.getElementById('vis-notes').value.trim() || null
@@ -1488,7 +1605,7 @@ async function uploadSheet() {
     const path = `${Date.now()}_cl.txt`
     const ok = await sb.upload(path, blob)
     if (!ok) { alert('저장에 실패했어요'); return }
-    await sb.post('ssw_sheet_music', { song_id: songId, file_name: title, storage_path: path, file_type: 'chord-lyric', key_chords: keyChords })
+    await sb.post('ssw_sheet_music', { user_id: currentUser?.id, song_id: songId, file_name: title, storage_path: path, file_type: 'chord-lyric', key_chords: keyChords })
     document.getElementById('sheet-cl-text').value = ''
     document.getElementById('sheet-cl-title').value = ''
   } else if (uploadTab === 'url') {
@@ -1499,14 +1616,14 @@ async function uploadSheet() {
     const ext = name.split('.').pop().toLowerCase()
     const type = ['jpg','jpeg','png','gif','webp'].includes(ext) ? 'image/'+ext
       : ext === 'pdf' ? 'application/pdf' : 'link'
-    await sb.post('ssw_sheet_music', { song_id: songId, file_name: name, storage_path: url, file_type: type, key_chords: keyChords })
+    await sb.post('ssw_sheet_music', { user_id: currentUser?.id, song_id: songId, file_name: name, storage_path: url, file_type: type, key_chords: keyChords })
   } else {
     const file = document.getElementById('sheet-file').files[0]
     if (!file) { alert('파일을 선택하세요'); return }
     const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`
     const ok = await sb.upload(path, file)
     if (!ok) { alert('업로드에 실패했어요. 파일 크기나 형식을 확인해주세요.'); return }
-    await sb.post('ssw_sheet_music', { song_id: songId, file_name: file.name, storage_path: path, file_type: file.type, key_chords: keyChords })
+    await sb.post('ssw_sheet_music', { user_id: currentUser?.id, song_id: songId, file_name: file.name, storage_path: path, file_type: file.type, key_chords: keyChords })
     document.getElementById('sheet-file').value = ''
   }
   closeUploadModal(); loadSheets()
