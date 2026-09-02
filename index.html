@@ -818,10 +818,10 @@ a{color:var(--accent)}
 <!-- FAB -->
 <button class="fab hidden" id="fab" onclick="fabAction()">＋</button>
 
-<!-- ADD SONG MODAL -->
+<!-- ADD/EDIT SONG MODAL -->
 <div class="modal-ov" id="song-modal" style="display:none" onclick="if(event.target===this)closeSongModal()">
   <div class="modal-sheet">
-    <h3>곡 추가</h3>
+    <h3 id="song-modal-title">곡 추가</h3>
     <div class="form-row"><label>제목 *</label><input type="text" id="sng-title" placeholder="곡 제목"></div>
     <div class="form-row"><label>아티스트</label><input type="text" id="sng-artist" placeholder="아티스트명"></div>
     <div class="form-row"><label>코드 링크</label><input type="url" id="sng-chord" placeholder="https://…"></div>
@@ -1191,6 +1191,7 @@ function renderSongsList() {
           <div class="song-item-sub">${esc(s.artist||'아티스트 미상')}${s.chord_url ? ` · <a href="${s.chord_url}" target="_blank">코드↗</a>` : ''}</div>
         </div>
         <span class="badge ${CLS[s.status]||'badge-done'}">${LABEL[s.status]||s.status}</span>
+        <button class="btn-icon" onclick="editSong('${s.id}')">✏️</button>
         <button class="btn-icon" onclick="deleteSong('${s.id}')">🗑</button>
       </div>`).join('')
     : '<div class="empty">+ 버튼으로 곡을 추가하세요</div>'
@@ -1272,21 +1273,43 @@ function switchGTab(tab, btn) {
 }
 
 // ─── SONG MODAL ──────────────────────────────────────────────────────────────
-function showSongModal() { document.getElementById('song-modal').style.display = 'flex' }
+let editingSongId = null
+function showSongModal() {
+  editingSongId = null
+  document.getElementById('song-modal-title').textContent = '곡 추가'
+  document.getElementById('song-modal').style.display = 'flex'
+}
+function editSong(id) {
+  const s = S.songs.find(x => x.id === id)
+  if (!s) return
+  editingSongId = id
+  document.getElementById('song-modal-title').textContent = '곡 수정'
+  document.getElementById('sng-title').value = s.title || ''
+  document.getElementById('sng-artist').value = s.artist || ''
+  document.getElementById('sng-chord').value = s.chord_url || ''
+  document.getElementById('sng-status').value = s.status || 'wishlist'
+  document.getElementById('song-modal').style.display = 'flex'
+}
 function closeSongModal() {
   document.getElementById('song-modal').style.display = 'none'
   ;['sng-title','sng-artist','sng-chord'].forEach(id => document.getElementById(id).value = '')
   document.getElementById('sng-status').value = 'wishlist'
+  editingSongId = null
 }
 async function saveSong() {
   const title = document.getElementById('sng-title').value.trim()
   if (!title) { alert('제목을 입력하세요'); return }
-  await sb.post('ssw_songs', {
+  const data = {
     title,
     artist: document.getElementById('sng-artist').value.trim() || null,
     chord_url: document.getElementById('sng-chord').value.trim() || null,
     status: document.getElementById('sng-status').value
-  })
+  }
+  if (editingSongId) {
+    await sb.patch('ssw_songs', editingSongId, data)
+  } else {
+    await sb.post('ssw_songs', data)
+  }
   closeSongModal(); loadGoalsView()
 }
 
