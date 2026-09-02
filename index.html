@@ -518,8 +518,9 @@ a{color:var(--accent)}
 .pres-chord-bar{display:flex;align-items:flex-start;gap:5px;padding:6px 14px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);scrollbar-width:none}
 .pres-chord-bar:empty{display:none}
 .pres-chord-bar::-webkit-scrollbar{display:none}
-.pres-wrap{flex:1;overflow:hidden;min-height:0;position:relative}
-#pres-content{transform-origin:top left;padding:14px 24px;position:absolute;top:0;left:0}
+.pres-wrap{flex:1;overflow:hidden;min-height:0}
+#pres-content{height:100%;padding:12px 24px;column-fill:auto;column-gap:28px;box-sizing:border-box}
+#pres-content .cl-section{break-inside:avoid}
 .cl-help{font-size:11px;color:var(--muted);line-height:1.6;padding-top:4px}
 
 /* PREVIEW */
@@ -1505,17 +1506,10 @@ function openPresMode() {
   document.getElementById('pres-title').textContent = presTitle
   document.getElementById('pres-chord-bar').innerHTML = presChords.map(name => miniChordEl(name)).join('')
   const inner = document.getElementById('pres-content')
-  inner.style.cssText = 'transform:none;width:auto;padding:14px 24px;position:absolute;top:0;left:0'
   inner.innerHTML = renderChordLyric(presText)
+  inner.style.columnCount = '2'
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    const wrap = document.getElementById('pres-wrap')
-    const wH = wrap.clientHeight, wW = wrap.clientWidth
-    const cH = inner.scrollHeight, cW = inner.scrollWidth
-    const scale = Math.min(wH / cH, wW / cW, 1)
-    if (scale < 1) {
-      inner.style.width = Math.round(wW / scale) + 'px'
-      inner.style.transform = `scale(${scale})`
-    }
+    if (inner.scrollWidth > inner.clientWidth + 4) inner.style.columnCount = '3'
   }))
 }
 function closePres() {
