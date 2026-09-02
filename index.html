@@ -891,6 +891,10 @@ a{color:var(--accent)}
         <div class="cl-help">💡 # 으로 섹션 구분 · [코드명] 뒤에 가사</div>
       </div>
     </div>
+    <div class="form-row" style="margin-top:4px">
+      <label>주요 코드 <span style="color:var(--muted);font-weight:400">(선택사항)</span></label>
+      <input type="text" id="sheet-key-chords" placeholder="예: C Am F G  (띄어쓰기로 구분)">
+    </div>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-secondary" style="flex:1" onclick="closeUploadModal()">취소</button>
       <button class="btn btn-primary" style="flex:2" onclick="uploadSheet()">저장</button>
@@ -1363,6 +1367,7 @@ async function showUploadModal() {
 function closeUploadModal() {
   document.getElementById('upload-modal').style.display = 'none'
   document.getElementById('sheet-url').value = ''
+  document.getElementById('sheet-key-chords').value = ''
   switchUploadTab('file')
 }
 
@@ -1380,6 +1385,7 @@ function switchUploadTab(tab) {
 
 async function uploadSheet() {
   const songId = document.getElementById('sheet-song-sel').value || null
+  const keyChords = document.getElementById('sheet-key-chords').value.trim() || null
   if (uploadTab === 'chord-lyric') {
     const text = document.getElementById('sheet-cl-text').value.trim()
     const title = document.getElementById('sheet-cl-title').value.trim() || '코드+가사 악보'
@@ -1388,7 +1394,7 @@ async function uploadSheet() {
     const path = `${Date.now()}_cl.txt`
     const ok = await sb.upload(path, blob)
     if (!ok) { alert('저장에 실패했어요'); return }
-    await sb.post('ssw_sheet_music', { song_id: songId, file_name: title, storage_path: path, file_type: 'chord-lyric' })
+    await sb.post('ssw_sheet_music', { song_id: songId, file_name: title, storage_path: path, file_type: 'chord-lyric', key_chords: keyChords })
     document.getElementById('sheet-cl-text').value = ''
     document.getElementById('sheet-cl-title').value = ''
   } else if (uploadTab === 'url') {
@@ -1399,14 +1405,14 @@ async function uploadSheet() {
     const ext = name.split('.').pop().toLowerCase()
     const type = ['jpg','jpeg','png','gif','webp'].includes(ext) ? 'image/'+ext
       : ext === 'pdf' ? 'application/pdf' : 'link'
-    await sb.post('ssw_sheet_music', { song_id: songId, file_name: name, storage_path: url, file_type: type })
+    await sb.post('ssw_sheet_music', { song_id: songId, file_name: name, storage_path: url, file_type: type, key_chords: keyChords })
   } else {
     const file = document.getElementById('sheet-file').files[0]
     if (!file) { alert('파일을 선택하세요'); return }
     const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`
     const ok = await sb.upload(path, file)
     if (!ok) { alert('업로드에 실패했어요. 파일 크기나 형식을 확인해주세요.'); return }
-    await sb.post('ssw_sheet_music', { song_id: songId, file_name: file.name, storage_path: path, file_type: file.type })
+    await sb.post('ssw_sheet_music', { song_id: songId, file_name: file.name, storage_path: path, file_type: file.type, key_chords: keyChords })
     document.getElementById('sheet-file').value = ''
   }
   closeUploadModal(); loadSheets()
@@ -1424,6 +1430,7 @@ function openSheet(idx) {
   const content = document.getElementById('sfv-content')
   const dlBtn = document.getElementById('sfv-dl')
 
+  const manualChords = sheet.key_chords ? sheet.key_chords.trim().split(/\s+/).filter(Boolean) : []
   if (sheet.file_type === 'chord-lyric') {
     dlBtn.style.display = 'none'
     chordBar.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:4px">불러오는 중…</div>'
@@ -1431,13 +1438,12 @@ function openSheet(idx) {
     fetch(sb.fileUrl(sheet.storage_path))
       .then(r => r.text())
       .then(text => {
-        const chords = extractChords(text)
-        renderChordBar(chords)
+        renderChordBar(manualChords.length ? manualChords : extractChords(text))
         content.innerHTML = renderChordLyric(text)
       })
       .catch(() => { content.innerHTML = '<div class="empty">불러오기 실패</div>'; chordBar.innerHTML = '' })
   } else {
-    chordBar.innerHTML = ''
+    renderChordBar(manualChords)
     const url = sb.fileUrl(sheet.storage_path)
     dlBtn.href = url; dlBtn.style.display = ''
     const ext = url.split('?')[0].split('.').pop().toLowerCase()
