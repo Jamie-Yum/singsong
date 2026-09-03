@@ -1147,7 +1147,8 @@ async function doSignUp() {
       body: JSON.stringify({ email, password: pw })
     }).then(r => r.json())
     if (r?.access_token) { saveSession(r); showApp() }
-    else showAuthErr(r?.error_description || '회원가입 중 문제가 생겼어요')
+    else if (r?.id || r?.user?.id) showAuthErr('가입 완료! 이메일 받은편지함에서 확인 링크를 클릭하면 로그인할 수 있어요')
+    else showAuthErr(r?.error_description || r?.message || r?.msg || '회원가입 중 문제가 생겼어요')
   } catch { showAuthErr('네트워크 오류가 발생했어요') }
   setAuthBusy(false)
 }
