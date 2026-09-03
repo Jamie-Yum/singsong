@@ -1123,7 +1123,7 @@ function showApp() {
 async function doLogin() {
   const email = document.getElementById('auth-email').value.trim()
   const pw = document.getElementById('auth-pw').value
-  if (!email || !pw) return
+  if (!email || !pw) { showAuthErr('이메일과 비밀번호를 입력해주세요'); return }
   setAuthBusy(true)
   try {
     const r = await fetch(`${AUTH_URL}/token?grant_type=password`, {
@@ -1138,7 +1138,7 @@ async function doLogin() {
 async function doSignUp() {
   const email = document.getElementById('auth-email').value.trim()
   const pw = document.getElementById('auth-pw').value
-  if (!email || !pw) return
+  if (!email || !pw) { showAuthErr('이메일과 비밀번호를 입력해주세요'); return }
   if (pw.length < 6) { showAuthErr('비밀번호는 6자 이상이어야 해요'); return }
   setAuthBusy(true)
   try {
